@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -305,4 +306,313 @@
     renderSystems();
   </script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小売・飲食・現場 統合業務ポータルシステム (詳細管理版)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in { animation: fadeIn 0.25s ease-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .system-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+    .system-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.15); }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-blue-600 rounded-lg text-xl shadow">❖</div>
+        <div>
+          <h1 class="text-lg font-bold tracking-wide leading-tight">小売・飲食・現場 統合業務ポータル</h1>
+          <p class="text-xs text-slate-400">Advanced Retail & Food Service Management Hub</p>
+        </div>
+      </div>
+
+      <!-- ロール切替セレクター -->
+      <div class="flex items-center space-x-3 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+        <span class="text-xs text-slate-400 font-bold whitespace-nowrap">👁️ 視点切り替え:</span>
+        <select id="role-selector" onchange="changeRole(this.value)" class="bg-slate-900 text-xs text-white border border-slate-600 rounded px-2 py-1 focus:outline-none focus:border-blue-500">
+          <option value="all">全表示 (管理者・店長)</option>
+          <option value="store">店舗・売場スタッフ</option>
+          <option value="kitchen">厨房・調理スタッフ</option>
+          <option value="hr">人事・労務管理</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツエリア -->
+  <div class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+
+    <!-- ポータルランチャー画面 -->
+    <section id="portal-view">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <span>🚀</span> 専門業務モジュール一覧
+        </h2>
+        <span id="display-count" class="text-xs font-bold bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full">4 システムを表示中</span>
+      </div>
+
+      <div id="systems-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 fade-in">
+        <!-- JSで動的にカード生成 -->
+      </div>
+    </section>
+
+    <!-- 各サブシステムの詳細・入力画面（初期は非表示） -->
+    <section id="sub-app-view" class="hidden fade-in bg-white rounded-xl border p-6 shadow-sm">
+      <button onclick="backToPortal()" class="mb-4 px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
+        <span>←</span> <span>ポータル一覧に戻る</span>
+      </button>
+      <div id="sub-app-content"></div>
+    </section>
+
+  </div>
+
+  <!-- フッター -->
+  <footer class="bg-slate-900 text-slate-400 text-xs py-6 mt-auto border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+      <p class="font-bold text-slate-300">小売・飲食・現場 統合業務ポータルシステム</p>
+      <p>&copy; 2026 Advanced Operations Portal. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // 小売・飲食に特化した詳細管理モジュールの定義
+    const systems = [
+      {
+        id: 'food_preservation',
+        name: '食料品保存・賞味期限・HACCP管理',
+        icon: '🧊',
+        color: 'from-cyan-700 to-blue-900',
+        textColor: 'text-cyan-800',
+        bgColor: 'bg-cyan-50',
+        borderColor: 'border-cyan-200',
+        badge: '飲食・品質管理',
+        roles: ['all', 'store', 'kitchen'],
+        description: '冷蔵・冷凍庫の温度記録、食材の賞味期限アラート、廃棄ロス削減のための在庫トレース。',
+        features: ['冷蔵冷凍庫 温度点検', '賞味期限切れチェッカー', '食材ロス・廃棄日報'],
+        htmlContent: `
+          <h3 class="text-xl font-bold mb-3 flex items-center gap-2"><span>🧊</span> 食料品保存・賞味期限・HACCP管理</h3>
+          <p class="text-sm text-slate-600 mb-4">庫内温度の厳密な管理と、食材の鮮度・賞味期限チェックを行います。</p>
+          
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="p-4 bg-cyan-50 border rounded-lg"><p class="text-xs text-cyan-800 font-bold">冷蔵庫A (3号機)</p><p class="text-2xl font-bold text-emerald-600">3.8 ℃ (正常)</p></div>
+            <div class="p-4 bg-cyan-50 border rounded-lg"><p class="text-xs text-cyan-800 font-bold">冷凍ストッカー</p><p class="text-2xl font-bold text-emerald-600">-20.1 ℃ (正常)</p></div>
+            <div class="p-4 bg-rose-50 border rounded-lg"><p class="text-xs text-rose-800 font-bold">要注意 (賞味期限間近)</p><p class="text-2xl font-bold text-rose-600">4 品目</p></div>
+          </div>
+
+          <div class="space-y-6">
+            <form onsubmit="alert('温度点検データをHACCP記録として保存しました。'); return false;" class="space-y-4 border p-4 rounded-lg bg-slate-50">
+              <h4 class="font-bold text-sm text-slate-700">1. 庫内温度 定期点検記録</h4>
+              <div class="grid grid-cols-3 gap-4">
+                <div><label class="block text-xs font-bold">点検時間帯</label><select class="w-full border rounded p-2 text-sm"><option>朝番 (開店前)</option><option>中番 (午後)</option><option>遅番 (閉店後)</option></select></div>
+                <div><label class="block text-xs font-bold">測定温度 (℃)</label><input type="number" step="0.1" placeholder="4.2" class="w-full border rounded p-2 text-sm" required></div>
+                <div><label class="block text-xs font-bold">点検者名</label><input type="text" placeholder="佐藤 健" class="w-full border rounded p-2 text-sm" required></div>
+              </div>
+              <button type="submit" class="bg-cyan-800 text-white px-4 py-2 rounded text-xs font-bold hover:bg-cyan-900">温度データを記録</button>
+            </form>
+
+            <form onsubmit="alert('廃棄・ロス報告を登録しました。'); return false;" class="space-y-4 border p-4 rounded-lg bg-slate-50">
+              <h4 class="font-bold text-sm text-slate-700">2. 食材ロス・廃棄登録 (原価管理)</h4>
+              <div class="grid grid-cols-3 gap-4">
+                <div><label class="block text-xs font-bold">食材・商品名</label><input type="text" placeholder="国産牛スライス (パック)" class="w-full border rounded p-2 text-sm" required></div>
+                <div><label class="block text-xs font-bold">廃棄理由</label><select class="w-full border rounded p-2 text-sm"><option>賞味期限超過</option><option>調理ミス・品質不良</option><option>過剰在庫ロス</option></select></div>
+                <div><label class="block text-xs font-bold">損失金額 (円)</label><input type="number" placeholder="1500" class="w-full border rounded p-2 text-sm" required></div>
+              </div>
+              <button type="submit" class="bg-rose-700 text-white px-4 py-2 rounded text-xs font-bold hover:bg-rose-800">廃棄ロスを登録</button>
+            </form>
+          </div>
+        `
+      },
+      {
+        id: 'employee_management',
+        name: '店舗スタッフ・従業員管理 (シフト・労務)',
+        icon: '👥',
+        color: 'from-indigo-600 to-violet-800',
+        textColor: 'text-indigo-700',
+        bgColor: 'bg-indigo-50',
+        borderColor: 'border-indigo-200',
+        badge: '労務・スタッフ管理',
+        roles: ['all', 'store', 'hr'],
+        description: 'アルバイト・パートのシフト希望回収、タイムカード打刻確認、個別面談メモ、緊急連絡網。',
+        features: ['シフト希望提出・自動調整', 'スタッフ労務・スキル管理', '緊急連絡網・マニュアル'],
+        htmlContent: `
+          <h3 class="text-xl font-bold mb-3 flex items-center gap-2"><span>👥</span> 店舗スタッフ・従業員管理</h3>
+          <p class="text-sm text-slate-600 mb-4">アルバイト・パートのシフト管理、稼働時間、および個別スキル進捗の管理。</p>
+
+          <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="p-4 bg-indigo-50 border rounded-lg"><p class="text-xs text-indigo-700 font-bold">在籍スタッフ数</p><p class="text-2xl font-bold">24 名</p></div>
+            <div class="p-4 bg-emerald-50 border rounded-lg"><p class="text-xs text-emerald-700 font-bold">今週の総労働予定</p><p class="text-2xl font-bold">480 時間</p></div>
+            <div class="p-4 bg-amber-50 border rounded-lg"><p class="text-xs text-amber-700 font-bold">シフト未提出</p><p class="text-2xl font-bold text-rose-600">2 名</p></div>
+          </div>
+
+          <div class="space-y-6">
+            <form onsubmit="alert('シフト希望を登録しました。'); return false;" class="space-y-4 border p-4 rounded-lg bg-slate-50">
+              <h4 class="font-bold text-sm text-slate-700">1. シフト希望・変更申請</h4>
+              <div class="grid grid-cols-3 gap-4">
+                <div><label class="block text-xs font-bold">スタッフ氏名</label><input type="text" placeholder="鈴木 花子" class="w-full border rounded p-2 text-sm" required></div>
+                <div><label class="block text-xs font-bold">対象日</label><input type="date" class="w-full border rounded p-2 text-sm" required></div>
+                <div><label class="block text-xs font-bold">希望時間帯</label><select class="w-full border rounded p-2 text-sm"><option>早番 (09:00 - 15:00)</option><option>遅番 (15:00 - 22:00)</option><option>フルタイム (09:00 - 18:00)</option><option>公休・希望休み</option></select></div>
+              </div>
+              <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded text-xs font-bold hover:bg-indigo-700">シフト希望を提出</button>
+            </form>
+
+            <form onsubmit="alert('スタッフ評価メモを保存しました。'); return false;" class="space-y-4 border p-4 rounded-lg bg-slate-50">
+              <h4 class="font-bold text-sm text-slate-700">2. トレーニング・スキルチェック (教育カルテ)</h4>
+              <div class="grid grid-cols-2 gap-4">
+                <div><label class="block text-xs font-bold">対象スタッフ</label><input type="text" placeholder="高橋 航" class="w-full border rounded p-2 text-sm" required></div>
+                <div><label class="block text-xs font-bold">習得項目・段階</label><select class="w-full border rounded p-2 text-sm"><option>レジ操作・接客マナー (Lv.1)</option><option>調理補助・盛付 (Lv.2)</option><option>発注業務・在庫点検 (Lv.3)</option><option>店舗リーダー・締め作業 (Lv.4)</option></select></div>
+              </div>
+              <div><label class="block text-xs font-bold">指導コメント・特記事項</label><textarea rows="2" placeholder="笑顔での挨拶が非常に良い。次はレジトラブル対応を指導予定。" class="w-full border rounded p-2 text-sm"></textarea></div>
+              <button type="submit" class="bg-violet-700 text-white px-4 py-2 rounded text-xs font-bold hover:bg-violet-800">カルテを更新</button>
+            </form>
+          </div>
+        `
+      },
+      {
+        id: 'retail_inventory_order',
+        name: 'リアルタイム在庫 & 自動発注・納品検収',
+        icon: '📦',
+        color: 'from-rose-600 to-pink-800',
+        textColor: 'text-rose-700',
+        bgColor: 'bg-rose-50',
+        borderColor: 'border-rose-200',
+        badge: '小売・受発注管理',
+        roles: ['all', 'store'],
+        description: '店舗ごとの商品在庫数チェック、安全在庫を下回った際の発注、および卸業者からの納品検収。',
+        features: ['在庫数リアルタイム確認', '仕入先への発注依頼', '納品・検収チェック'],
+        htmlContent: `
+          <h3 class="text-xl font-bold mb-3 flex items-center gap-2"><span>📦</span> リアルタイム在庫 & 自動発注管理</h3>
+          <p class="text-sm text-slate-600 mb-4">店頭およびバックヤードの在庫切れを防ぎ、最適な数量を発注・検収します。</p>
+
+          <form onsubmit="alert('発注データを仕入先へ送信しました。'); return false;" class="space-y-4 border p-4 rounded-lg bg-slate-50 mb-6">
+            <h4 class="font-bold text-sm text-slate-700">新規商品発注</h4>
+            <div class="grid grid-cols-3 gap-4">
+              <div><label class="block text-xs font-bold">仕入先・問屋名</label><select class="w-full border rounded p-2 text-sm"><option>〇〇食品卸 株式会社</option><option>△△ベバレッジ物産</option></select></div>
+              <div><label class="block text-xs font-bold">発注商品コード / 名称</label><input type="text" placeholder="PRD-8821 飲料水 500ml" class="w-full border rounded p-2 text-sm" required></div>
+              <div><label class="block text-xs font-bold">発注数量 (ケース)</label><input type="number" placeholder="10" class="w-full border rounded p-2 text-sm" required></div>
+            </div>
+            <button type="submit" class="bg-rose-600 text-white px-4 py-2 rounded text-xs font-bold hover:bg-rose-700">発注を確定する</button>
+          </form>
+
+          <div class="border rounded-lg overflow-hidden">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-200 text-slate-700">
+                <tr><th class="p-3">商品コード</th><th class="p-3">商品名</th><th class="p-3">現在庫数</th><th class="p-3">発注点</th><th class="p-3">ステータス</th></tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 bg-white">
+                <tr><td class="p-3">ITM-012</td><td class="p-3">お弁当用 割り箸 (100膳)</td><td class="p-3 font-bold">12 パック</td><td class="p-3">15 パック</td><td class="p-3"><span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded font-bold">要発注</span></td></tr>
+                <tr><td class="p-3">ITM-045</td><td class="p-3">レジロール紙 (感熱紙)</td><td class="p-3 font-bold">8 ロール</td><td class="p-3">5 ロール</td><td class="p-3"><span class="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-bold">十分</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        `
+      },
+      {
+        id: 'daily_sales_report',
+        name: '店舗日別売上・客数・レジ締め分析',
+        icon: '📊',
+        color: 'from-amber-600 to-orange-800',
+        textColor: 'text-amber-800',
+        bgColor: 'bg-amber-50',
+        borderColor: 'border-amber-200',
+        badge: '売上・レジ管理',
+        roles: ['all', 'store'],
+        description: 'レジ締め時の現金・キャッシュレス売上照合、客単価分析、時間帯別の来客数レポート。',
+        features: ['レジ現金・売上照合', '時間帯別売上分析', '日報自動作成'],
+        htmlContent: `
+          <h3 class="text-xl font-bold mb-3 flex items-center gap-2"><span>📊</span> 店舗日別売上・レジ締め分析</h3>
+          <p class="text-sm text-slate-600 mb-4">毎日の営業終了時のレジ現金とPOS売上の突合、および客単価の集計。</p>
+
+          <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="p-4 bg-amber-50 border rounded-lg"><p class="text-xs text-amber-800 font-bold">本日の総売上</p><p class="text-xl font-bold">¥ 342,500</p></div>
+            <div class="p-4 bg-amber-50 border rounded-lg"><p class="text-xs text-amber-800 font-bold">総来客数</p><p class="text-xl font-bold">285 人</p></div>
+            <div class="p-4 bg-amber-50 border rounded-lg"><p class="text-xs text-amber-800 font-bold">客単価平均</p><p class="text-xl font-bold">¥ 1,201</p></div>
+            <div class="p-4 bg-emerald-50 border rounded-lg"><p class="text-xs text-emerald-800 font-bold">レジ差異 (過不足)</p><p class="text-xl font-bold text-emerald-600">¥ 0 (一致)</p></div>
+          </div>
+
+          <form onsubmit="alert('本日のレジ締め・売上日報を本部に送信しました。'); return false;" class="space-y-4 border p-4 rounded-lg bg-slate-50">
+            <h4 class="font-bold text-sm text-slate-700">閉店時 レジ現金・売上確定入力</h4>
+            <div class="grid grid-cols-3 gap-4">
+              <div><label class="block text-xs font-bold">POSシステム売上合計</label><input type="number" placeholder="342500" class="w-full border rounded p-2 text-sm" required></div>
+              <div><label class="block text-xs font-bold">ドロア内 現金実査額</label><input type="number" placeholder="142500" class="w-full border rounded p-2 text-sm" required></div>
+              <div><label class="block text-xs font-bold">キャッシュレス決済計</label><input type="number" placeholder="200000" class="w-full border rounded p-2 text-sm" required></div>
+            </div>
+            <button type="submit" class="bg-amber-700 text-white px-5 py-2 rounded text-xs font-bold hover:bg-amber-800">日報を確定・送信</button>
+          </form>
+        `
+      }
+    ];
+
+    let currentRole = 'all';
+
+    function renderSystems() {
+      const grid = document.getElementById('systems-grid');
+      grid.innerHTML = '';
+      const filtered = systems.filter(sys => sys.roles.includes(currentRole));
+      document.getElementById('display-count').textContent = `${filtered.length} システムを表示中`;
+
+      filtered.forEach(sys => {
+        const card = document.createElement('div');
+        card.className = `system-card bg-white rounded-xl border ${sys.borderColor} shadow-sm overflow-hidden flex flex-col justify-between`;
+        const featureBadges = sys.features.map(f => `<span class="text-[11px] font-medium px-2 py-0.5 rounded ${sys.bgColor} ${sys.textColor}">${f}</span>`).join(' ');
+
+        card.innerHTML = `
+          <div>
+            <div class="p-5 bg-gradient-to-r ${sys.color} text-white flex justify-between items-start">
+              <div class="flex items-center space-x-3">
+                <span class="text-3xl">${sys.icon}</span>
+                <div>
+                  <h3 class="font-bold text-lg leading-tight">${sys.name}</h3>
+                  <span class="text-[10px] uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded mt-1 inline-block">${sys.badge}</span>
+                </div>
+              </div>
+            </div>
+            <div class="p-5 space-y-3">
+              <p class="text-xs text-slate-600 leading-relaxed">${sys.description}</p>
+              <div class="flex flex-wrap gap-1.5 pt-1">${featureBadges}</div>
+            </div>
+          </div>
+          <div class="px-5 pb-5 pt-2 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+            <button onclick="openSubApp('${sys.id}')" class="w-full text-center py-2.5 px-4 bg-slate-900 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition-colors shadow flex items-center justify-center gap-2">
+              <span>詳細画面を開く</span><span>→</span>
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function changeRole(role) {
+      currentRole = role;
+      renderSystems();
+    }
+
+    function openSubApp(id) {
+      const sys = systems.find(s => s.id === id);
+      if (!sys) return;
+      document.getElementById('portal-view').classList.add('hidden');
+      const subView = document.getElementById('sub-app-view');
+      subView.classList.remove('hidden');
+      document.getElementById('sub-app-content').innerHTML = sys.htmlContent;
+    }
+
+    function backToPortal() {
+      document.getElementById('sub-app-view').classList.add('hidden');
+      document.getElementById('portal-view').classList.remove('hidden');
+    }
+
+    renderSystems();
+  </script>
+</body>
+>>>>>>> 5014a6bb678258fef484eedb9636e649cdfba0f4
 </html>

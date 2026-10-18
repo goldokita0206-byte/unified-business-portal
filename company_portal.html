@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -263,4 +264,271 @@
     renderContent();
   </script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>社内ポータル＆申請システム</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-slate-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl">🏢</span>
+        <h1 class="text-xl font-bold tracking-wide">社内ポータル & ワークフロー</h1>
+      </div>
+      <div class="text-sm text-slate-300">
+        ログインユーザー: 山田 太郎 (総務部)
+      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 flex max-w-7xl w-full mx-auto p-4 gap-6">
+
+    <!-- サイドバーナビゲーション -->
+    <aside class="w-64 bg-white rounded-lg shadow p-4 flex flex-col justify-between h-[calc(100vh-6rem)] sticky top-4">
+      <div class="overflow-y-auto pr-1">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">申請・業務メニュー</h2>
+        <nav id="nav-list" class="space-y-1">
+          <!-- JSで動的にボタンを生成します -->
+        </nav>
+      </div>
+      <div class="pt-4 border-t text-xs text-slate-400 text-center">
+        &copy; 2026 社内ワークフローシステム
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ表示エリア -->
+    <main class="flex-1 bg-white rounded-lg shadow p-6 min-h-[calc(100vh-6rem)]">
+      <div id="content-area" class="fade-in">
+        <!-- 初期表示コンテンツ -->
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    // ===== 1. 全14機能の定義と入力形式設定 =====
+    const menuItems = [
+      { id: 'decision', name: '全社決裁', icon: '📝', category: '決裁・承認', fields: [
+        { label: '案件名', type: 'text', placeholder: '例：新規基幹システム導入の件' },
+        { label: '決裁概要・目的', type: 'textarea', placeholder: '決裁の背景と目的を入力してください' },
+        { label: '予算額 (円)', type: 'number', placeholder: '1000000' },
+        { label: '添付資料', type: 'file' }
+      ]},
+      { id: 'purchase', name: '購入申請', icon: '🛒', category: '経費・物品', fields: [
+        { label: '品名', type: 'text', placeholder: '例：4Kモニター 27インチ' },
+        { label: '数量', type: 'number', value: '1' },
+        { label: '概算金額 (円)', type: 'number', placeholder: '45000' },
+        { label: '購入理由', type: 'textarea', placeholder: '業務効率化のため' }
+      ]},
+      { id: 'business-card', name: '名刺作成管理', icon: '📇', category: '総務', fields: [
+        { label: '氏名（漢字）', type: 'text', value: '山田 太郎' },
+        { label: '氏名（ローマ字）', type: 'text', value: 'Taro Yamada' },
+        { label: '所属部署・役職', type: 'text', value: '総務部 主任' },
+        { label: '作成希望枚数', type: 'select', options: ['100枚', '200枚', '300枚'] },
+        { label: 'レイアウト変更等の備考', type: 'textarea', placeholder: '特記事項があれば入力してください' }
+      ]},
+      { id: 'address-change', name: '住所変更届', icon: '🏠', category: '人事・労務', fields: [
+        { label: '変更後の新郵便番号', type: 'text', placeholder: '100-0001' },
+        { label: '変更後の新住所', type: 'text', placeholder: '東京都千代田区千代田1-1' },
+        { label: '変更適用日', type: 'date' },
+        { label: '通勤経路の変更有無', type: 'select', options: ['あり', 'なし'] }
+      ]},
+      { id: 'congratulation', name: '慶弔時申請', icon: '祝', category: '人事・労務', fields: [
+        { label: '申請種別', type: 'select', options: ['結婚祝金', '出産祝金', '弔慰金・生花'] },
+        { label: '対象者氏名・続柄', type: 'text', placeholder: '例：山田 花子（配偶者）' },
+        { label: '発生日（挙式日・弔事日など）', type: 'date' },
+        { label: '証明書類（証明書等）', type: 'file' }
+      ]},
+      { id: 'faq', name: '社内FAQ', icon: '❓', category: '情報参照', isCustom: true },
+      { id: 'announcement', name: '業務連絡掲示', icon: '📢', category: '情報参照', isCustom: true },
+      { id: 'survey', name: '社内アンケート', icon: '📊', category: '情報参照', isCustom: true },
+      { id: 'expense', name: '経費申請', icon: '💴', category: '経費・物品', fields: [
+        { label: '立替日付', type: 'date' },
+        { label: '支払先・科目', type: 'text', placeholder: '例：〇〇タクシー / 交通費' },
+        { label: '金額 (円)', type: 'number', placeholder: '3500' },
+        { label: '領収書画像', type: 'file' },
+        { label: '使用目的', type: 'textarea', placeholder: '訪問先への移動のため' }
+      ]},
+      { id: 'product-planning', name: '商品企画管理', icon: '💡', category: '企画・開発', fields: [
+        { label: '企画タイトル', type: 'text', placeholder: '例：新世代エコバック開発プロジェクト' },
+        { label: 'ターゲット層', type: 'text', placeholder: '20代～30代のオフィスワーカー' },
+        { label: '想定売価・原価', type: 'text', placeholder: '売価:2,000円 / 原価:600円' },
+        { label: '企画詳細・コンセプト', type: 'textarea', placeholder: '商品のコンセプトや競合他社との差別化要素を入力' }
+      ]},
+      { id: 'overtime', name: '時間外労働申請', icon: '⏰', category: '勤怠管理', fields: [
+        { label: '実施予定日', type: 'date' },
+        { label: '予定時間区分', type: 'select', options: ['残業 (定時後)', '早朝残業', '休日出勤'] },
+        { label: '開始〜終了予定時刻', type: 'text', placeholder: '18:00 ～ 20:00' },
+        { label: '業務内容・理由', type: 'textarea', placeholder: '月末決算業務の対応のため' }
+      ]},
+      { id: 'leave', name: '休暇申請', icon: '🌴', category: '勤怠管理', fields: [
+        { label: '休暇種類', type: 'select', options: ['年次有給休暇', '午前半休', '午後半休', '夏季休暇', '慶弔休暇', '病気休暇'] },
+        { label: '開始日', type: 'date' },
+        { label: '終了日', type: 'date' },
+        { label: '緊急連絡先・備考', type: 'text', placeholder: '連絡先電話番号等' }
+      ]},
+      { id: 'remote-work', name: 'リモートワーク申請', icon: '💻', category: '勤怠管理', fields: [
+        { label: '実施日', type: 'date' },
+        { label: '勤務場所', type: 'select', options: ['自宅', 'サテライトオフィス', 'その他'] },
+        { label: '当日実施予定の業務内容', type: 'textarea', placeholder: '仕様書作成、オンラインミーティング' }
+      ]},
+      { id: 'business-trip', name: '出張申請', icon: '✈️', category: '勤怠管理', fields: [
+        { label: '出張先・訪問先', type: 'text', placeholder: '例：大阪支社・〇〇株式会社様' },
+        { label: '出発日', type: 'date' },
+        { label: '帰任日', type: 'date' },
+        { label: '宿泊の有無', type: 'select', options: ['宿泊あり', '日帰り'] },
+        { label: '出張目的・スケジュール', type: 'textarea', placeholder: '新商品の商談及び納品立ち会いのため' }
+      ]}
+    ];
+
+    // ===== 2. 初期化とサイドバー生成 =====
+    let currentTab = 'decision';
+
+    function initNavigation() {
+      const navList = document.getElementById('nav-list');
+      navList.innerHTML = '';
+
+      menuItems.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left px-3 py-2 rounded-md font-medium text-sm transition-all flex items-center space-x-2 ${
+          item.id === currentTab 
+            ? 'bg-blue-600 text-white shadow' 
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+        }`;
+        btn.onclick = () => switchTab(item.id);
+        btn.innerHTML = `<span>${item.icon}</span> <span>${item.name}</span>`;
+        navList.appendChild(btn);
+      });
+    }
+
+    // ===== 3. 画面切り替えロジック =====
+    function switchTab(tabId) {
+      currentTab = tabId;
+      initNavigation();
+      renderContent();
+    }
+
+    // ===== 4. メインエリア描画処理 =====
+    function renderContent() {
+      const contentArea = document.getElementById('content-area');
+      const currentItem = menuItems.find(i => i.id === currentTab);
+
+      contentArea.className = 'fade-in';
+
+      // A. カスタム表示（FAQ、掲示板、アンケート）
+      if (currentItem.isCustom) {
+        if (currentItem.id === 'faq') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>❓</span> 社内FAQ</h2>
+            <div class="space-y-4">
+              <details class="border rounded-lg p-4 bg-slate-50 cursor-pointer">
+                <summary class="font-bold text-slate-700">経費精算の締め日はいつですか？</summary>
+                <p class="mt-2 text-sm text-slate-600">毎月25日締め、翌月10日振込となります。期日までに申請を完了させてください。</p>
+              </details>
+              <details class="border rounded-lg p-4 bg-slate-50 cursor-pointer">
+                <summary class="font-bold text-slate-700">有給休暇の当日取得は可能ですか？</summary>
+                <p class="mt-2 text-sm text-slate-600">急病等やむを得ない場合は当日朝9:00までに本システムより「休暇申請」を出した上で、チャットで部署へ連絡してください。</p>
+              </details>
+            </div>
+          `;
+        } else if (currentItem.id === 'announcement') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>📢</span> 業務連絡掲示</h2>
+            <div class="space-y-4">
+              <div class="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-r">
+                <div class="text-xs text-blue-600 font-bold mb-1">2026-09-01 全社通知</div>
+                <h3 class="font-bold text-slate-800">年末調整提出に伴う事前準備のお知らせ</h3>
+                <p class="text-sm text-slate-600 mt-1">今年度の年末調整申告に関するマニュアルを配布しました。各自確認をお願いします。</p>
+              </div>
+            </div>
+          `;
+        } else if (currentItem.id === 'survey') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>📊</span> 社内アンケート</h2>
+            <div class="border rounded-lg p-6 bg-slate-50 space-y-4">
+              <h3 class="font-bold text-lg text-slate-700">2026年度 職場環境・働き方に関するアンケート</h3>
+              <p class="text-sm text-slate-600">回答期限: 2026年9月30日</p>
+              <div class="space-y-2">
+                <label class="block text-sm font-medium">現在のリモートワーク頻度は適切ですか？</label>
+                <select class="w-full border rounded p-2 text-sm">
+                  <option>非常に適切</option>
+                  <option>やや少なく増やしたい</option>
+                  <option>やや多く出社を増やしたい</option>
+                </select>
+              </div>
+              <button onclick="alert('アンケートを送信しました。ご協力ありがとうございました。')" class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700">アンケート回答を送信</button>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      // B. 汎用フォーム画面（決裁、各種申請系）
+      let fieldsHtml = currentItem.fields.map(field => {
+        let inputControl = '';
+        if (field.type === 'textarea') {
+          inputControl = `<textarea rows="3" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>`;
+        } else if (field.type === 'select') {
+          const optionsHtml = field.options.map(opt => `<option>${opt}</option>`).join('');
+          inputControl = `<select class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">${optionsHtml}</select>`;
+        } else {
+          inputControl = `<input type="${field.type}" value="${field.value || ''}" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">`;
+        }
+
+        return `
+          <div class="space-y-1">
+            <label class="block text-sm font-bold text-slate-700">${field.label}</label>
+            ${inputControl}
+          </div>
+        `;
+      }).join('');
+
+      contentArea.innerHTML = `
+        <div class="flex justify-between items-center mb-6 pb-2 border-b">
+          <h2 class="text-2xl font-bold flex items-center gap-2">
+            <span>${currentItem.icon}</span>
+            <span>${currentItem.name}</span>
+          </h2>
+          <span class="text-xs px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full font-bold">${currentItem.category}</span>
+        </div>
+
+        <form onsubmit="handleSubmit(event, '${currentItem.name}')" class="space-y-5">
+          ${fieldsHtml}
+          <div class="pt-4 flex justify-end gap-3">
+            <button type="button" onclick="switchTab('decision')" class="px-5 py-2 border rounded-lg text-sm font-bold hover:bg-slate-50">キャンセル</button>
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow">申請を送信</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // ===== 5. フォーム送信擬似処理 =====
+    function handleSubmit(e, name) {
+      e.preventDefault();
+      alert(`「${name}」の送信が完了しました。承認ルートに回送されます。`);
+      e.target.reset();
+    }
+
+    // 初回実行
+    initNavigation();
+    renderContent();
+  </script>
+</body>
+>>>>>>> 5014a6bb678258fef484eedb9636e649cdfba0f4
 </html>

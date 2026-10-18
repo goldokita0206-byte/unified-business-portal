@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -253,4 +254,261 @@
     renderContent();
   </script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>社外コラボレーション・クライアントポータル</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-blue-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl">🌐</span>
+        <h1 class="text-xl font-bold tracking-wide">Client Collaboration Portal</h1>
+      </div>
+      <div class="text-sm text-blue-200">
+        ご利用企業: 株式会社パートナーズ 様（担当: 佐々木 葵 様）
+      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 flex max-w-7xl w-full mx-auto p-4 gap-6">
+
+    <!-- サイドバーナビゲーション -->
+    <aside class="w-64 bg-white rounded-lg shadow p-4 flex flex-col justify-between h-[calc(100vh-6rem)] sticky top-4">
+      <div class="overflow-y-auto pr-1">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">社外連携メニュー</h2>
+        <nav id="nav-list" class="space-y-1">
+          <!-- JSで動的にボタンを生成 -->
+        </nav>
+      </div>
+      <div class="pt-4 border-t text-xs text-slate-400 text-center">
+        &copy; 2026 クライアントポータル
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ表示エリア -->
+    <main class="flex-1 bg-white rounded-lg shadow p-6 min-h-[calc(100vh-6rem)]">
+      <div id="content-area" class="fade-in">
+        <!-- 初期表示コンテンツ -->
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    // ===== 1. 全8機能の定義 =====
+    const menuItems = [
+      { id: 'inquiry', name: '問い合わせ受付', icon: '💬', category: 'コミュニケーション', fields: [
+        { label: 'お問い合せ種別', type: 'select', options: ['製品・サービスについて', '仕様・技術的な質問', 'お見積りについて', '障害・不具合の報告', 'その他'] },
+        { label: '件名', type: 'text', placeholder: '例：〇〇機能の仕様に関するご質問' },
+        { label: 'ご担当者様お名前', type: 'text', value: '佐々木 葵' },
+        { label: 'お問い合わせ内容詳細', type: 'textarea', placeholder: '具体的な内容や状況をご記入ください' },
+        { label: '関連ファイル添付', type: 'file' }
+      ]},
+      { id: 'contract', name: '契約管理', icon: '📜', category: '取引・法務', fields: [
+        { label: '対象契約名', type: 'text', placeholder: 'システム保守運用業務委託契約' },
+        { label: '契約ステータス', type: 'select', options: ['有効 (契約中)', '更新手続き中', '締結締結待ち', '終了'] },
+        { label: '契約開始日～完了日', type: 'text', placeholder: '2026/04/01 ～ 2027/03/31' },
+        { label: '契約書控ファイル（PDF）', type: 'file' }
+      ]},
+      { id: 'estimate-order', name: '見積・発注依頼', icon: '📝', category: '取引・法務', fields: [
+        { label: '依頼種別', type: 'select', options: ['新規お見積り依頼', '発注依頼（注文書送付）', '見積内容の変更依頼'] },
+        { label: '対象案件名', type: 'text', placeholder: '〇〇プロジェクト 追加機能開発' },
+        { label: 'ご予算感 (円)', type: 'number', placeholder: '1000000' },
+        { label: '希望納期', type: 'date' },
+        { label: '仕様書・注文書ファイル添付', type: 'file' },
+        { label: '備考・ご要望', type: 'textarea', placeholder: '納品形式や希望の進め方など' }
+      ]},
+      { id: 'marketing-docs', name: '販促資料共有', icon: '📚', category: '共有・ダウンロード', isCustom: true },
+      { id: 'deal-progress', name: '案件進捗報告', icon: '📈', category: 'ステータス共有', isCustom: true },
+      { id: 'communication', name: '業務連絡', icon: '📢', category: 'コミュニケーション', isCustom: true },
+      { id: 'project-management', name: 'プロジェクト管理', icon: '🏁', category: 'ステータス共有', isCustom: true },
+      { id: 'work-report', name: '作業報告', icon: '📋', category: 'ステータス共有', fields: [
+        { label: '作業実施日', type: 'date' },
+        { label: '作業件名・フェーズ', type: 'text', placeholder: '月次定期サーバーメンテナンス・セキュリティアップデート' },
+        { label: '作業完了ステータス', type: 'select', options: ['正常完了', '一部継続対応あり', '中断・延期'] },
+        { label: '作業実施内容報告', type: 'textarea', placeholder: '実施した作業内容と確認結果の詳細' },
+        { label: '作業完了報告書添付', type: 'file' }
+      ]}
+    ];
+
+    // ===== 2. 初期化とナビゲーション生成 =====
+    let currentTab = 'deal-progress';
+
+    function initNavigation() {
+      const navList = document.getElementById('nav-list');
+      navList.innerHTML = '';
+
+      menuItems.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left px-3 py-2 rounded-md font-medium text-sm transition-all flex items-center space-x-2 ${
+          item.id === currentTab 
+            ? 'bg-blue-600 text-white shadow' 
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+        }`;
+        btn.onclick = () => switchTab(item.id);
+        btn.innerHTML = `<span>${item.icon}</span> <span>${item.name}</span>`;
+        navList.appendChild(btn);
+      });
+    }
+
+    // ===== 3. 画面切り替え =====
+    function switchTab(tabId) {
+      currentTab = tabId;
+      initNavigation();
+      renderContent();
+    }
+
+    // ===== 4. コンテンツ描画 =====
+    function renderContent() {
+      const contentArea = document.getElementById('content-area');
+      const currentItem = menuItems.find(i => i.id === currentTab);
+
+      contentArea.className = 'fade-in';
+
+      // A. 社外向け閲覧・共有用カスタム表示
+      if (currentItem.isCustom) {
+        if (currentItem.id === 'deal-progress') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>📈</span> 案件進捗報告 (リアルタイムステータス)</h2>
+            <div class="space-y-4">
+              <div class="p-5 border rounded-lg bg-slate-50">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="font-bold text-lg text-slate-800">次世代ECサイト構築プロジェクト</h3>
+                  <span class="text-xs font-bold text-blue-700 bg-blue-100 px-3 py-1 rounded-full">開発フェーズ (65%)</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-3 mb-4">
+                  <div class="bg-blue-600 h-3 rounded-full" style="width: 65%"></div>
+                </div>
+                <div class="text-sm text-slate-600 space-y-1 border-t pt-3">
+                  <p><strong>現在の状況:</strong> フロントエンド実装および決済API連携作業を進行中。</p>
+                  <p><strong>次回マイルストーン:</strong> 2026/09/20 デザインレビュー会</p>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (currentItem.id === 'marketing-docs') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>📚</span> 販促資料・共有ファイルライブラリ</h2>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="p-4 border rounded-lg bg-slate-50 flex justify-between items-center">
+                <div>
+                  <p class="font-bold text-slate-800">2026年最新 総合製品カタログ.pdf</p>
+                  <p class="text-xs text-slate-500">サイズ: 12.4 MB | 更新日: 2026/09/01</p>
+                </div>
+                <button onclick="alert('ダウンロードを開始します')" class="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-700">DL</button>
+              </div>
+              <div class="p-4 border rounded-lg bg-slate-50 flex justify-between items-center">
+                <div>
+                  <p class="font-bold text-slate-800">導入事例集_IT・製造業編.pdf</p>
+                  <p class="text-xs text-slate-500">サイズ: 5.8 MB | 更新日: 2026/08/15</p>
+                </div>
+                <button onclick="alert('ダウンロードを開始します')" class="px-3 py-1.5 bg-blue-600 text-white text-xs font-bold rounded hover:bg-blue-700">DL</button>
+              </div>
+            </div>
+          `;
+        } else if (currentItem.id === 'communication') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>📢</span> 業務連絡・お知らせ</h2>
+            <div class="space-y-4">
+              <div class="p-4 border-l-4 border-blue-600 bg-blue-50 rounded-r">
+                <div class="flex justify-between text-xs text-blue-700 font-bold mb-1">
+                  <span>お知らせ</span>
+                  <span>2026/09/05</span>
+                </div>
+                <h3 class="font-bold text-slate-800">弊社サポートセンター 秋期休業のお知らせ</h3>
+                <p class="text-sm text-slate-600 mt-2">誠に勝手ながら、10月12日（月）は全社研修のためサポート窓口をお休みとさせていただきます。</p>
+              </div>
+            </div>
+          `;
+        } else if (currentItem.id === 'project-management') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>🏁</span> プロジェクト管理 (共同ロードマップ)</h2>
+            <div class="border rounded-lg p-4 bg-slate-50 space-y-3">
+              <div class="flex justify-between items-center p-3 bg-white rounded border">
+                <span class="font-bold text-sm">1. 要件定義・基本設計</span>
+                <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded">完了 (2026/07)</span>
+              </div>
+              <div class="flex justify-between items-center p-3 bg-white rounded border border-blue-300">
+                <span class="font-bold text-sm">2. システム開発・テスト</span>
+                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded">進行中 (2026/08 - 10)</span>
+              </div>
+              <div class="flex justify-between items-center p-3 bg-white rounded border text-slate-400">
+                <span class="font-bold text-sm">3. 納品・運用トレーニング</span>
+                <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded">予定 (2026/11)</span>
+              </div>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      // B. 汎用入力・送信フォーム表示
+      let fieldsHtml = currentItem.fields.map(field => {
+        let inputControl = '';
+        if (field.type === 'textarea') {
+          inputControl = `<textarea rows="3" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>`;
+        } else if (field.type === 'select') {
+          const optionsHtml = field.options.map(opt => `<option>${opt}</option>`).join('');
+          inputControl = `<select class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">${optionsHtml}</select>`;
+        } else {
+          inputControl = `<input type="${field.type}" value="${field.value || ''}" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">`;
+        }
+
+        return `
+          <div class="space-y-1">
+            <label class="block text-sm font-bold text-slate-700">${field.label}</label>
+            ${inputControl}
+          </div>
+        `;
+      }).join('');
+
+      contentArea.innerHTML = `
+        <div class="flex justify-between items-center mb-6 pb-2 border-b">
+          <h2 class="text-2xl font-bold flex items-center gap-2">
+            <span>${currentItem.icon}</span>
+            <span>${currentItem.name}</span>
+          </h2>
+          <span class="text-xs px-2.5 py-1 bg-blue-50 text-blue-800 rounded-full font-bold">${currentItem.category}</span>
+        </div>
+
+        <form onsubmit="handleSubmit(event, '${currentItem.name}')" class="space-y-5">
+          ${fieldsHtml}
+          <div class="pt-4 flex justify-end gap-3">
+            <button type="button" onclick="switchTab('deal-progress')" class="px-5 py-2 border rounded-lg text-sm font-bold hover:bg-slate-50">キャンセル</button>
+            <button type="submit" class="px-6 py-2 bg-blue-700 text-white rounded-lg text-sm font-bold hover:bg-blue-800 shadow">送信する</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // ===== 5. フォーム送信処理 =====
+    function handleSubmit(e, name) {
+      e.preventDefault();
+      alert(`「${name}」の内容を送信しました。担当者より折り返しご連絡いたします。`);
+      e.target.reset();
+    }
+
+    // 初回実行
+    initNavigation();
+    renderContent();
+  </script>
+</body>
+>>>>>>> 5014a6bb678258fef484eedb9636e649cdfba0f4
 </html>

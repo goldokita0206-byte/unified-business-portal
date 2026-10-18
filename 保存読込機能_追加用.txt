@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿<!-- ▼ 各HTMLファイルの</body>直前に追加 ▼ -->
 <script src="assets/js/data_manager.js"></script>
 <script>
@@ -35,3 +36,42 @@ async function loadSelected() {
     <option value="">-- 過去データを選択 --</option>
   </select>
 </div>
+=======
+﻿<!-- ▼ 各HTMLファイルの</body>直前に追加 ▼ -->
+<script src="assets/js/data_manager.js"></script>
+<script>
+const CATEGORY = "@@CATEGORY@@";
+
+async function saveCurrentForm() {
+  const data = formToJSON("mainForm");
+  const res = await saveData(CATEGORY, data);
+  alert("保存しました: " + res.path);
+  refreshFileList();
+}
+
+async function refreshFileList() {
+  const list = await listFiles(CATEGORY);
+  const sel = document.getElementById("fileSelector");
+  sel.innerHTML = `<option value="">-- 過去データを選択 --</option>`;
+  list.forEach(f => sel.innerHTML += `<option value="${f}">${f}</option>`);
+}
+
+async function loadSelected() {
+  const sel = document.getElementById("fileSelector").value;
+  if (!sel) return;
+  const data = await loadData(CATEGORY, sel);
+  Object.keys(data).forEach(k => {
+    const el = document.querySelector(`[name="${k}"]`);
+    if (el) el.value = data[k];
+  });
+}
+</script>
+
+<!-- フォーム下部に追加 -->
+<div style="margin-top:20px;padding:15px;background:#f5f5f5;border-radius:8px;">
+  <button onclick="saveCurrentForm()" style="padding:8px 20px;background:#2563eb;color:#fff;border:none;border-radius:4px;cursor:pointer;">💾 保存</button>
+  <select id="fileSelector" onchange="loadSelected()" style="padding:6px;margin-left:10px;min-width:250px;">
+    <option value="">-- 過去データを選択 --</option>
+  </select>
+</div>
+>>>>>>> 5014a6bb678258fef484eedb9636e649cdfba0f4

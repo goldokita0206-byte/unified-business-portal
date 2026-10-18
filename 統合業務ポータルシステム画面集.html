@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -233,4 +234,241 @@
     renderSystems();
   </script>
 </body>
+=======
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>社内・外部連携・現場向け 統合業務ポータルシステム画面集</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.25s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .system-card {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .system-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.15);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-blue-600 rounded-lg text-xl shadow">❖</div>
+        <div>
+          <h1 class="text-lg font-bold tracking-wide leading-tight">社内・外部連携・現場向け 統合業務ポータルシステム画面集</h1>
+          <p class="text-xs text-slate-400">Enterprise Unified Business Portal & Launcher</p>
+        </div>
+      </div>
+
+      <!-- ロール切替プレビュー -->
+      <div class="flex items-center space-x-3 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+        <span class="text-xs text-slate-400 font-bold whitespace-nowrap">👁️ 視点切り替え:</span>
+        <select id="role-selector" onchange="changeRole(this.value)" class="bg-slate-900 text-xs text-white border border-slate-600 rounded px-2 py-1 focus:outline-none focus:border-blue-500">
+          <option value="all">全システム表示（管理者）</option>
+          <option value="employee">一般社員 (社内・コーポレート)</option>
+          <option value="factory">現場作業員・製造担当</option>
+          <option value="public">自治体・行政職員</option>
+          <option value="client">社外パートナー・クライアント</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツエリア -->
+  <div class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+
+    <!-- 6大サブシステムランチャー -->
+    <section>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <span>🚀</span> 業務システムハブ (6大統合モジュール)
+        </h2>
+        <span id="display-count" class="text-xs font-bold bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full">6 システムを表示中</span>
+      </div>
+
+      <div id="systems-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in">
+        <!-- JSで動的にシステムカードを生成します -->
+      </div>
+    </section>
+
+  </div>
+
+  <!-- フッター -->
+  <footer class="bg-slate-900 text-slate-400 text-xs py-6 mt-auto border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+      <p class="font-bold text-slate-300">社内・外部連携・現場向け 統合業務ポータルシステム画面集</p>
+      <p>&copy; 2026 Enterprise Integrated Portal System. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // ===== 6大システムの定義データ =====
+    const systems = [
+      {
+        id: 'sales_crm',
+        name: '営業支援 & CRM',
+        fileName: 'sales_crm.html',
+        icon: '📈',
+        color: 'from-indigo-600 to-indigo-800',
+        textColor: 'text-indigo-600',
+        bgColor: 'bg-indigo-50',
+        borderColor: 'border-indigo-200',
+        badge: '営業・マーケティング',
+        roles: ['all', 'employee'],
+        description: '顧客情報・商談案件・営業日報・見積作成・予実管理やKPI集計を一元管理します。',
+        features: ['顧客・商談管理', '予実集計・KPI', '見積・月次分析']
+      },
+      {
+        id: 'public_sector',
+        name: '公共・行政業務管理',
+        fileName: 'public_sector_portal.html',
+        icon: '🏛️',
+        color: 'from-indigo-900 to-slate-900',
+        textColor: 'text-indigo-900',
+        bgColor: 'bg-indigo-50',
+        borderColor: 'border-indigo-200',
+        badge: '行政・自治体・公共',
+        roles: ['all', 'public'],
+        description: '政策プロジェクト、公用車管理、入札・予算管理、住民補助金申請審査を統合支援。',
+        features: ['政策・公用車管理', '入札・予算事業', '住民補助金審査']
+      },
+      {
+        id: 'factory',
+        name: '現場・生産管理',
+        fileName: 'factory_portal.html',
+        icon: '🏭',
+        color: 'from-amber-700 to-amber-900',
+        textColor: 'text-amber-800',
+        bgColor: 'bg-amber-50',
+        borderColor: 'border-amber-200',
+        badge: '製造・現場・品質',
+        roles: ['all', 'factory'],
+        description: '工程進捗ガントチャート、工数入力、設備点検、不具合・ヒヤリハット報告を管理。',
+        features: ['工程進捗・工数', '設備点検・不具合', 'ヒヤリハット・5S']
+      },
+      {
+        id: 'corporate',
+        name: 'コーポレート管理',
+        fileName: 'corporate_management.html',
+        icon: '🖥️',
+        color: 'from-teal-700 to-teal-900',
+        textColor: 'text-teal-800',
+        bgColor: 'bg-teal-50',
+        borderColor: 'border-teal-200',
+        badge: 'IT情シス・人事総務',
+        roles: ['all', 'employee'],
+        description: 'ITヘルプデスク・資産管理、人事評価、採用、社用車・備品貸出管理をサポート。',
+        features: ['ITヘルプデスク/資産', '人事評価・タレント', '社用車・購買・経理']
+      },
+      {
+        id: 'company',
+        name: '社内ポータル & 申請',
+        fileName: 'company_portal.html',
+        icon: '🏢',
+        color: 'from-slate-700 to-slate-900',
+        textColor: 'text-slate-800',
+        bgColor: 'bg-slate-100',
+        borderColor: 'border-slate-300',
+        badge: '全社共通・ワークフロー',
+        roles: ['all', 'employee', 'factory', 'public'],
+        description: '全社決裁・経費精算・勤怠（休暇/残業/リモート/出張）ワークフローと社内FAQ。',
+        features: ['各種決裁・経費申請', '勤怠・出張・リモート', '社内FAQ・お知らせ']
+      },
+      {
+        id: 'client',
+        name: '社外・クライアント連携',
+        fileName: 'client_portal.html',
+        icon: '🌐',
+        color: 'from-blue-700 to-blue-900',
+        textColor: 'text-blue-700',
+        bgColor: 'bg-blue-50',
+        borderColor: 'border-blue-200',
+        badge: '社外コラボレーション',
+        roles: ['all', 'client', 'employee'],
+        description: '社外パートナーや顧客との問い合わせ受付、契約、見積発注、共同進捗報告ハブ。',
+        features: ['問い合わせ・契約', '見積・発注依頼', 'リアルタイム進捗共有']
+      }
+    ];
+
+    let currentRole = 'all';
+
+    // ===== 画面描画ロジック =====
+    function renderSystems() {
+      const grid = document.getElementById('systems-grid');
+      grid.innerHTML = '';
+
+      const filtered = systems.filter(sys => sys.roles.includes(currentRole));
+
+      document.getElementById('display-count').textContent = `${filtered.length} システムを表示中`;
+
+      filtered.forEach(sys => {
+        const card = document.createElement('div');
+        card.className = `system-card bg-white rounded-xl border ${sys.borderColor} shadow-sm overflow-hidden flex flex-col justify-between`;
+
+        const featureBadges = sys.features.map(f => 
+          `<span class="text-[11px] font-medium px-2 py-0.5 rounded ${sys.bgColor} ${sys.textColor}">${f}</span>`
+        ).join(' ');
+
+        card.innerHTML = `
+          <div>
+            <!-- カードヘッダー -->
+            <div class="p-5 bg-gradient-to-r ${sys.color} text-white flex justify-between items-start">
+              <div class="flex items-center space-x-3">
+                <span class="text-3xl">${sys.icon}</span>
+                <div>
+                  <h3 class="font-bold text-lg leading-tight">${sys.name}</h3>
+                  <span class="text-[10px] uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded mt-1 inline-block">${sys.badge}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- カード本文 -->
+            <div class="p-5 space-y-3">
+              <p class="text-xs text-slate-600 leading-relaxed">${sys.description}</p>
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                ${featureBadges}
+              </div>
+            </div>
+          </div>
+
+          <!-- カードフッター (ボタン) -->
+          <div class="px-5 pb-5 pt-2 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+            <a href="${sys.fileName}" class="w-full text-center py-2.5 px-4 bg-slate-900 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition-colors shadow flex items-center justify-center gap-2">
+              <span>画面を開く</span>
+              <span>→</span>
+            </a>
+          </div>
+        `;
+
+        grid.appendChild(card);
+      });
+    }
+
+    // ===== ロール切り替え処理 =====
+    function changeRole(role) {
+      currentRole = role;
+      const grid = document.getElementById('systems-grid');
+      grid.classList.remove('fade-in');
+      void grid.offsetWidth; // リフロー発生によるアニメーション再始動
+      grid.classList.add('fade-in');
+      renderSystems();
+    }
+
+    // 初回描画
+    renderSystems();
+  </script>
+</body>
+>>>>>>> 5014a6bb678258fef484eedb9636e649cdfba0f4
 </html>
