@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>生産・現場管理ポータルシステム</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-amber-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl">🏭</span>
+        <h1 class="text-xl font-bold tracking-wide">現場・生産管理 Dashboard</h1>
+      </div>
+      <div class="text-sm text-amber-200">
+        ログイン担当者: 高橋 誠 (製造第一課)
+      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 flex max-w-7xl w-full mx-auto p-4 gap-6">
+
+    <!-- サイドバーナビゲーション -->
+    <aside class="w-64 bg-white rounded-lg shadow p-4 flex flex-col justify-between h-[calc(100vh-6rem)] sticky top-4">
+      <div class="overflow-y-auto pr-1">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">現場・工程管理メニュー</h2>
+        <nav id="nav-list" class="space-y-1">
+          <!-- JSで動的にボタンを生成 -->
+        </nav>
+      </div>
+      <div class="pt-4 border-t text-xs text-slate-400 text-center">
+        &copy; 2026 現場管理システム
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ表示エリア -->
+    <main class="flex-1 bg-white rounded-lg shadow p-6 min-h-[calc(100vh-6rem)]">
+      <div id="content-area" class="fade-in">
+        <!-- 初期表示コンテンツ -->
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    // ===== 1. 全10機能の定義 =====
+    const menuItems = [
+      { id: 'process', name: '工程管理', icon: '🔄', category: '進捗・原価', isCustom: true },
+      { id: 'man-hours', name: '工数管理', icon: '⏱️', category: '進捗・原価', fields: [
+        { label: '作業日', type: 'date' },
+        { label: '対象工程・ライン', type: 'select', options: ['第1組立ライン', '第2加工ライン', '検査・梱包工程', '設備メンテナンス'] },
+        { label: '作業従事者数', type: 'number', value: '4' },
+        { label: '実労働工数 (人時 / MH)', type: 'number', placeholder: '32.0' },
+        { label: '作業内容・実績備考', type: 'textarea', placeholder: 'ライン調整に伴う標準工数との差分など' }
+      ]},
+      { id: 'execution-budget', name: '実行予算管理', icon: '💰', category: '進捗・原価', fields: [
+        { label: '対象プロジェクト/製造ロット', type: 'text', placeholder: 'LOT-20260907-A' },
+        { label: '実行予算額 (円)', type: 'number', placeholder: '2500000' },
+        { label: '見込み原価 (材料費・労務費)', type: 'number', placeholder: '2100000' },
+        { label: '予算管理メモ', type: 'textarea', placeholder: '資材価格高騰に伴う予備費の配分' }
+      ]},
+      { id: 'document', name: '文書管理', icon: '📁', category: '情報・指示', fields: [
+        { label: '文書タイトル', type: 'text', placeholder: '〇〇製品 標準作業手順書 (SOP)' },
+        { label: '文書カテゴリ', type: 'select', options: ['作業手順書(SOP)', '設備マニュアル', '品質規格書', '安全衛生規程'] },
+        { label: '改訂番号 (Rev.)', type: 'text', value: 'Ver. 1.2' },
+        { label: '文書ファイル添付', type: 'file' }
+      ]},
+      { id: 'work-instruction', name: '業務指図書／作業指示書', icon: '📋', category: '情報・指示', fields: [
+        { label: '指示書発行番号', type: 'text', placeholder: 'INS-2026-0089' },
+        { label: '対象ライン/班', type: 'text', placeholder: 'Bライン プレス担当' },
+        { label: '着手予定日・完了期限', type: 'date' },
+        { label: '指示内容・注意事項', type: 'textarea', placeholder: '安全保護具着用必須。トルク管理値: 45N・m' }
+      ]},
+      { id: 'daily-report', name: '作業日報', icon: '📝', category: '現場記録', fields: [
+        { label: '作業日', type: 'date' },
+        { label: '担当班/作業者', type: 'text', placeholder: '高橋 誠' },
+        { label: '本日完了数量 (個)', type: 'number', placeholder: '500' },
+        { label: '特記事項・申し送り', type: 'textarea', placeholder: '次工程への引継ぎ事項やライン一時停止の理由' }
+      ]},
+      { id: 'equipment-check', name: '設備・点検管理', icon: '🔧', category: '品質・安全', fields: [
+        { label: '設備名称・設備ID', type: 'text', placeholder: 'マシニングセンタ #3 (EQ-03)' },
+        { label: '点検種別', type: 'select', options: ['始業前点検', '定期保全(月次)', '特別点検・修理'] },
+        { label: '点検結果ステータス', type: 'select', options: ['正常 (問題なし)', '要観察', '要修理・部品交換', '稼働停止'] },
+        { label: '点検チェックメモ・交換パーツ', type: 'textarea', placeholder: 'オイルレベルOK、ベルト摩耗のため交換手配' }
+      ]},
+      { id: 'defect', name: '不具合管理', icon: '⚠️', category: '品質・安全', fields: [
+        { label: '発生日時', type: 'date' },
+        { label: '発生工程・対象製品', type: 'text', placeholder: '塗装工程 / 製品モデルX' },
+        { label: '不具合内容', type: 'select', options: ['寸法不良', '傷・塗装ムラ', '異物混入', '作動不良', 'その他'] },
+        { label: '発生原因と応急処置', type: 'textarea', placeholder: 'ノズル詰まりによる塗装ムラ。ノズル清掃実施。' }
+      ]},
+      { id: 'near-miss', name: 'ヒヤリハット管理', icon: '🚨', category: '品質・安全', fields: [
+        { label: '発生日時・場所', type: 'text', placeholder: '2026/09/07 10:30 第2倉庫 搬入ロケーション' },
+        { label: 'ヒヤリハット現象の概要', type: 'textarea', placeholder: 'フォークリフト後進時に歩行者と交差しそうになった' },
+        { label: '推測される要因', type: 'textarea', placeholder: '一時停止の不徹底および見通しの悪さ' },
+        { label: '再発防止策・改善案', type: 'textarea', placeholder: '通路へのカーブミラー設置と一時停止線の塗直し' }
+      ]},
+      { id: '5s-activity', name: '5S活動管理', icon: '🧹', category: '品質・安全', fields: [
+        { label: '対象エリア', type: 'text', placeholder: '第1工場 工具棚周辺' },
+        { label: '5S区分', type: 'select', options: ['整理 (Seiri)', '整頓 (Seiton)', '清掃 (Seisou)', '清潔 (Seiketsu)', 'しつけ (Shitsuke)'] },
+        { label: '活動前の課題・状況', type: 'textarea', placeholder: '治具の定位置が未固定で探すロスタイムが発生' },
+        { label: '改善内容・実施後状況', type: 'textarea', placeholder: '姿置き用ボードの作成と定位置化完了' },
+        { label: '改善前後の写真', type: 'file' }
+      ]}
+    ];
+
+    // ===== 2. 初期化とナビゲーション生成 =====
+    let currentTab = 'process';
+
+    function initNavigation() {
+      const navList = document.getElementById('nav-list');
+      navList.innerHTML = '';
+
+      menuItems.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left px-3 py-2 rounded-md font-medium text-sm transition-all flex items-center space-x-2 ${
+          item.id === currentTab 
+            ? 'bg-amber-800 text-white shadow' 
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+        }`;
+        btn.onclick = () => switchTab(item.id);
+        btn.innerHTML = `<span>${item.icon}</span> <span>${item.name}</span>`;
+        navList.appendChild(btn);
+      });
+    }
+
+    // ===== 3. 画面切り替え =====
+    function switchTab(tabId) {
+      currentTab = tabId;
+      initNavigation();
+      renderContent();
+    }
+
+    // ===== 4. コンテンツ描画 =====
+    function renderContent() {
+      const contentArea = document.getElementById('content-area');
+      const currentItem = menuItems.find(i => i.id === currentTab);
+
+      contentArea.className = 'fade-in';
+
+      // A. 特殊ダッシュボード表示（工程管理）
+      if (currentItem.isCustom) {
+        if (currentItem.id === 'process') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>🔄</span> 工程管理 (ガントチャート・進捗)</h2>
+            <div class="space-y-4">
+              <div class="p-4 border rounded-lg bg-slate-50">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="font-bold text-slate-800">ラインA: 機械加工工程 (LOT-A12)</span>
+                  <span class="text-xs font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded">進行中 (80%)</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-3">
+                  <div class="bg-amber-600 h-3 rounded-full" style="width: 80%"></div>
+                </div>
+              </div>
+
+              <div class="p-4 border rounded-lg bg-slate-50">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="font-bold text-slate-800">ラインB: 表面処理工程 (LOT-B04)</span>
+                  <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded">完了 (100%)</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-3">
+                  <div class="bg-emerald-600 h-3 rounded-full" style="width: 100%"></div>
+                </div>
+              </div>
+
+              <div class="p-4 border rounded-lg bg-slate-50">
+                <div class="flex justify-between items-center mb-2">
+                  <span class="font-bold text-slate-800">ラインC: 最終組立・検査 (LOT-C01)</span>
+                  <span class="text-xs font-bold text-rose-700 bg-rose-100 px-2 py-1 rounded">遅延注意 (35%)</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-3">
+                  <div class="bg-rose-500 h-3 rounded-full" style="width: 35%"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      // B. 汎用入力フォーム表示（不具合、ヒヤリハット、5S活動など）
+      let fieldsHtml = currentItem.fields.map(field => {
+        let inputControl = '';
+        if (field.type === 'textarea') {
+          inputControl = `<textarea rows="3" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>`;
+        } else if (field.type === 'select') {
+          const optionsHtml = field.options.map(opt => `<option>${opt}</option>`).join('');
+          inputControl = `<select class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">${optionsHtml}</select>`;
+        } else {
+          inputControl = `<input type="${field.type}" value="${field.value || ''}" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">`;
+        }
+
+        return `
+          <div class="space-y-1">
+            <label class="block text-sm font-bold text-slate-700">${field.label}</label>
+            ${inputControl}
+          </div>
+        `;
+      }).join('');
+
+      contentArea.innerHTML = `
+        <div class="flex justify-between items-center mb-6 pb-2 border-b">
+          <h2 class="text-2xl font-bold flex items-center gap-2">
+            <span>${currentItem.icon}</span>
+            <span>${currentItem.name}</span>
+          </h2>
+          <span class="text-xs px-2.5 py-1 bg-amber-50 text-amber-800 rounded-full font-bold">${currentItem.category}</span>
+        </div>
+
+        <form onsubmit="handleSubmit(event, '${currentItem.name}')" class="space-y-5">
+          ${fieldsHtml}
+          <div class="pt-4 flex justify-end gap-3">
+            <button type="button" onclick="switchTab('process')" class="px-5 py-2 border rounded-lg text-sm font-bold hover:bg-slate-50">リセット</button>
+            <button type="submit" class="px-6 py-2 bg-amber-800 text-white rounded-lg text-sm font-bold hover:bg-amber-900 shadow">登録・保存</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // ===== 5. フォーム送信処理 =====
+    function handleSubmit(e, name) {
+      e.preventDefault();
+      alert(`「${name}」のデータが正常に登録されました。`);
+      e.target.reset();
+    }
+
+    // 初回実行
+    initNavigation();
+    renderContent();
+  </script>
+</body>
+</html>

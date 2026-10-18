@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>営業支援 & CRM ポータルシステム</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-indigo-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl">📈</span>
+        <h1 class="text-xl font-bold tracking-wide">Sales & CRM Dashboard</h1>
+      </div>
+      <div class="text-sm text-indigo-200">
+        ログイン担当者: 佐藤 健太 (営業第一部)
+      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 flex max-w-7xl w-full mx-auto p-4 gap-6">
+
+    <!-- サイドバーナビゲーション -->
+    <aside class="w-64 bg-white rounded-lg shadow p-4 flex flex-col justify-between h-[calc(100vh-6rem)] sticky top-4">
+      <div class="overflow-y-auto pr-1">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">営業・顧客管理メニュー</h2>
+        <nav id="nav-list" class="space-y-1">
+          <!-- JSで動的にボタンを生成 -->
+        </nav>
+      </div>
+      <div class="pt-4 border-t text-xs text-slate-400 text-center">
+        &copy; 2026 営業支援システム
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ表示エリア -->
+    <main class="flex-1 bg-white rounded-lg shadow p-6 min-h-[calc(100vh-6rem)]">
+      <div id="content-area" class="fade-in">
+        <!-- 初期表示コンテンツ -->
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    // ===== 1. 全13機能の定義 =====
+    const menuItems = [
+      { id: 'customer', name: '顧客管理', icon: '👤', category: '顧客情報', fields: [
+        { label: '企業名・顧客名', type: 'text', placeholder: '株式会社〇〇' },
+        { label: '担当者名', type: 'text', placeholder: '山田 太郎 様' },
+        { label: '連絡先 (メール/電話)', type: 'text', placeholder: 'yamada@example.com' },
+        { label: '顧客ランク', type: 'select', options: ['S (最重要)', 'A (優良)', 'B (一般)', 'C (見込み)'] },
+        { label: '備考・メモ', type: 'textarea', placeholder: '初回訪問時の反応など' }
+      ]},
+      { id: 'deal', name: '案件管理', icon: '💼', category: '商談プロセス', fields: [
+        { label: '案件名', type: 'text', placeholder: '新規基幹システム構築案件' },
+        { label: '顧客名', type: 'text', placeholder: '株式会社〇〇' },
+        { label: '想定フェーズ', type: 'select', options: ['ヒアリング', '提案・見積', '条件交渉', '受注決定', '失注'] },
+        { label: '想定受注金額 (円)', type: 'number', placeholder: '5000000' },
+        { label: '完了予定日', type: 'date' }
+      ]},
+      { id: 'daily-report', name: '営業日報', icon: '📓', category: '日次業務', fields: [
+        { label: '報告日', type: 'date' },
+        { label: '本日訪問/商談件数', type: 'number', value: '3' },
+        { label: '主な商談内容', type: 'textarea', placeholder: '〇〇社様へ提案書提出。反応良好。' },
+        { label: '明日の予定・課題', type: 'textarea', placeholder: '▲▲社様の見積作成' }
+      ]},
+      { id: 'quotation', name: '見積管理', icon: '📄', category: '商談プロセス', fields: [
+        { label: '対象案件/顧客', type: 'text', placeholder: '株式会社〇〇 - 案件A' },
+        { label: '見積金額 (税抜/円)', type: 'number', placeholder: '1200000' },
+        { label: '有効期限', type: 'date' },
+        { label: '見積書ファイル添付', type: 'file' }
+      ]},
+      { id: 'budget-actual', name: '予実集計', icon: '📊', category: '分析・集計', isCustom: true },
+      { id: 'lost-analysis', name: '失注分析', icon: '📉', category: '分析・集計', fields: [
+        { label: '失注案件名', type: 'text', placeholder: '〇〇プロジェクト' },
+        { label: '主な失注理由', type: 'select', options: ['価格不適合', '競合他社選定', '時期尚早・見送り', '機能・仕様不足', 'その他'] },
+        { label: '競合企業名', type: 'text', placeholder: '競合B社' },
+        { label: '詳細分析・振り返り', type: 'textarea', placeholder: '次回に向けた改善点' }
+      ]},
+      { id: 'kpi', name: 'KPI集計', icon: '🎯', category: '分析・集計', isCustom: true },
+      { id: 'inquiry', name: '問い合わせ管理', icon: '📩', category: '顧客情報', fields: [
+        { label: '問い合わせ受託日', type: 'date' },
+        { label: '顧客・問合せ者名', type: 'text', placeholder: '鈴木 様' },
+        { label: '問い合わせチャネル', type: 'select', options: ['Webフォーム', '電話', 'メール', '展示会・イベント'] },
+        { label: '問い合わせ内容', type: 'textarea', placeholder: '製品の価格体系についての質問' },
+        { label: '対応ステータス', type: 'select', options: ['未対応', '対応中', '完了'] }
+      ]},
+      { id: 'campaign', name: '施策管理', icon: '📢', category: 'マーケティング', fields: [
+        { label: '施策・キャンペーン名', type: 'text', placeholder: '2026年秋 新製品セミナー' },
+        { label: '実施期間', type: 'text', placeholder: '2026/10/01 - 2026/10/15' },
+        { label: '予算 (円)', type: 'number', placeholder: '500000' },
+        { label: '目標獲得リード数', type: 'number', placeholder: '50' }
+      ]},
+      { id: 'monthly-report', name: '月次レポート', icon: '📑', category: '報告・分析', isCustom: true },
+      { id: 'sales-progress', name: '売上進捗管理', icon: '🚀', category: '分析・集計', isCustom: true },
+      { id: 'product', name: '商品管理', icon: '📦', category: 'マスタ設定', fields: [
+        { label: '商品コード', type: 'text', placeholder: 'PRD-001' },
+        { label: '商品・サービス名', type: 'text', placeholder: 'クラウドSaaSライセンス Aプラン' },
+        { label: '標準単価 (円)', type: 'number', placeholder: '50000' },
+        { label: 'カテゴリ', type: 'select', options: ['ソフトウェア', 'ハードウェア', 'コンサルティング', '保守サポート'] }
+      ]},
+      { id: 'insight', name: 'インサイト管理', icon: '💡', category: '分析・集計', fields: [
+        { label: '収集インサイト項目', type: 'text', placeholder: '業界共通のDX推進における課題' },
+        { label: '対象業界・顧客群', type: 'text', placeholder: '製造業（100～500名規模）' },
+        { label: '得られた知見・顧客の声', type: 'textarea', placeholder: '現場のITリテラシー不足により導入障壁が高い傾向' },
+        { label: 'プロダクト/営業への展開方針', type: 'textarea', placeholder: '導入支援マニュアルの作成と講習サービスのセット提案' }
+      ]}
+    ];
+
+    // ===== 2. 初期化とナビゲーション生成 =====
+    let currentTab = 'customer';
+
+    function initNavigation() {
+      const navList = document.getElementById('nav-list');
+      navList.innerHTML = '';
+
+      menuItems.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left px-3 py-2 rounded-md font-medium text-sm transition-all flex items-center space-x-2 ${
+          item.id === currentTab 
+            ? 'bg-indigo-600 text-white shadow' 
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+        }`;
+        btn.onclick = () => switchTab(item.id);
+        btn.innerHTML = `<span>${item.icon}</span> <span>${item.name}</span>`;
+        navList.appendChild(btn);
+      });
+    }
+
+    // ===== 3. 画面切り替え =====
+    function switchTab(tabId) {
+      currentTab = tabId;
+      initNavigation();
+      renderContent();
+    }
+
+    // ===== 4. コンテンツ描画 =====
+    function renderContent() {
+      const contentArea = document.getElementById('content-area');
+      const currentItem = menuItems.find(i => i.id === currentTab);
+
+      contentArea.className = 'fade-in';
+
+      // A. カスタムダッシュボード表示（予実集計、KPI、売上進捗など）
+      if (currentItem.isCustom) {
+        if (currentItem.id === 'budget-actual') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>📊</span> 予実集計</h2>
+            <div class="grid grid-cols-3 gap-4 mb-6">
+              <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+                <p class="text-xs text-indigo-600 font-bold">月間予算目標</p>
+                <p class="text-2xl font-bold text-slate-800">¥ 10,000,000</p>
+              </div>
+              <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-lg">
+                <p class="text-xs text-emerald-600 font-bold">現在の確定売上</p>
+                <p class="text-2xl font-bold text-slate-800">¥ 7,800,000</p>
+              </div>
+              <div class="p-4 bg-amber-50 border border-amber-100 rounded-lg">
+                <p class="text-xs text-amber-600 font-bold">達成率</p>
+                <p class="text-2xl font-bold text-slate-800">78.0 %</p>
+              </div>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-4 mb-6">
+              <div class="bg-indigo-600 h-4 rounded-full" style="width: 78%"></div>
+            </div>
+          `;
+        } else if (currentItem.id === 'kpi') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>🎯</span> KPI集計</h2>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="border p-4 rounded-lg bg-slate-50">
+                <h3 class="font-bold text-slate-700 mb-2">訪問・商談件数</h3>
+                <p class="text-3xl font-bold text-indigo-600">42 / 50 <span class="text-sm font-normal text-slate-500">件 (84%)</span></p>
+              </div>
+              <div class="border p-4 rounded-lg bg-slate-50">
+                <h3 class="font-bold text-slate-700 mb-2">新規提案件数</h3>
+                <p class="text-3xl font-bold text-indigo-600">12 / 10 <span class="text-sm font-normal text-slate-500">件 (120%)</span></p>
+              </div>
+            </div>
+          `;
+        } else if (currentItem.id === 'sales-progress') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>🚀</span> 売上進捗管理</h2>
+            <div class="space-y-4">
+              <div class="p-4 border rounded-lg bg-slate-50 flex justify-between items-center">
+                <div>
+                  <p class="font-bold">第3四半期 パイプライン総額</p>
+                  <p class="text-sm text-slate-500">Aランク案件〜Bランク案件の合計見込み</p>
+                </div>
+                <span class="text-2xl font-bold text-indigo-700">¥ 24,500,000</span>
+              </div>
+            </div>
+          `;
+        } else if (currentItem.id === 'monthly-report') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>📑</span> 月次レポート出力</h2>
+            <div class="p-6 border rounded-lg bg-slate-50 space-y-4">
+              <p class="text-sm text-slate-600">集計対象年月を選択して月次営業レポートを生成します。</p>
+              <div class="flex gap-4">
+                <input type="month" value="2026-09" class="border rounded p-2 text-sm">
+                <button onclick="alert('月次レポート（PDF）を出力しました。')" class="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-indigo-700">レポート生成</button>
+              </div>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      // B. 汎用入力フォーム表示（顧客管理、案件管理、営業日報など）
+      let fieldsHtml = currentItem.fields.map(field => {
+        let inputControl = '';
+        if (field.type === 'textarea') {
+          inputControl = `<textarea rows="3" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>`;
+        } else if (field.type === 'select') {
+          const optionsHtml = field.options.map(opt => `<option>${opt}</option>`).join('');
+          inputControl = `<select class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">${optionsHtml}</select>`;
+        } else {
+          inputControl = `<input type="${field.type}" value="${field.value || ''}" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">`;
+        }
+
+        return `
+          <div class="space-y-1">
+            <label class="block text-sm font-bold text-slate-700">${field.label}</label>
+            ${inputControl}
+          </div>
+        `;
+      }).join('');
+
+      contentArea.innerHTML = `
+        <div class="flex justify-between items-center mb-6 pb-2 border-b">
+          <h2 class="text-2xl font-bold flex items-center gap-2">
+            <span>${currentItem.icon}</span>
+            <span>${currentItem.name}</span>
+          </h2>
+          <span class="text-xs px-2.5 py-1 bg-indigo-50 text-indigo-700 rounded-full font-bold">${currentItem.category}</span>
+        </div>
+
+        <form onsubmit="handleSubmit(event, '${currentItem.name}')" class="space-y-5">
+          ${fieldsHtml}
+          <div class="pt-4 flex justify-end gap-3">
+            <button type="button" onclick="switchTab('customer')" class="px-5 py-2 border rounded-lg text-sm font-bold hover:bg-slate-50">クリア</button>
+            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg text-sm font-bold hover:bg-indigo-700 shadow">保存・送信</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // ===== 5. フォーム送信処理 =====
+    function handleSubmit(e, name) {
+      e.preventDefault();
+      alert(`「${name}」データが正常に保存されました。`);
+      e.target.reset();
+    }
+
+    // 初回実行
+    initNavigation();
+    renderContent();
+  </script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>統合業務ポータル - Windows 11風デスクトップ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { overflow: hidden; user-select: none; }
+    .fade-in { animation: fadeIn 0.2s ease-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .window {
+      transition: box-shadow 0.2s ease;
+    }
+    .window.active {
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+      z-index: 99 !important;
+    }
+    .taskbar-icon-active {
+      position: relative;
+    }
+    .taskbar-icon-active::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 3px;
+      background: #60a5fa;
+      border-radius: 2px;
+    }
+    .desktop-icon {
+      cursor: pointer;
+    }
+    .desktop-icon:hover {
+      background: rgba(255,255,255,0.1);
+      border-radius: 6px;
+    }
+    .desktop-icon * {
+      pointer-events: none; /* ✅ 子要素をクリックしても親イベントが発火する */
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-slate-900 text-white font-sans">
+
+  <!-- ===== デスクトップ背景 ===== -->
+  <div id="desktop" class="w-screen h-screen relative overflow-hidden"
+    style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+
+    <!-- デスクトップアイコン領域 -->
+    <div id="desktop-icons" class="absolute top-6 left-6 grid grid-cols-1 gap-4 w-28">
+      <!-- JSで動的生成 -->
+    </div>
+
+    <!-- ウィンドウ配置領域 -->
+    <div id="window-area" class="w-full h-full"></div>
+  </div>
+
+  <!-- ===== Windows11風 タスクバー ===== -->
+  <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-50
+    bg-slate-900/70 backdrop-blur-2xl border border-white/10 rounded-2xl px-4 py-2
+    flex items-center space-x-2 shadow-2xl">
+
+    <!-- スタートボタン -->
+    <button onclick="toggleStartMenu()" class="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/15 transition">
+      <span class="text-xl">🪟</span>
+    </button>
+
+    <!-- 開いているアプリ一覧 -->
+    <div id="taskbar-apps" class="flex items-center space-x-1">
+      <!-- JSで動的生成 -->
+    </div>
+
+    <div class="w-4"></div>
+
+    <!-- ロール切り替え -->
+    <div class="flex items-center space-x-2 bg-white/5 px-3 py-1 rounded-xl border border-white/10">
+      <span class="text-xs opacity-60">👁️</span>
+      <select id="role-selector" onchange="changeRole(this.value)"
+        class="bg-transparent text-xs text-white border-0 focus:outline-none cursor-pointer">
+        <option value="all">管理者（全6件表示）</option>
+        <option value="employee">一般社員</option>
+        <option value="factory">現場作業員</option>
+        <option value="public">行政職員</option>
+        <option value="client">パートナー</option>
+      </select>
+    </div>
+
+    <!-- 時計表示 -->
+    <div class="text-xs opacity-70 pl-2 pr-1 text-center min-w-[70px]">
+      <div id="clock-time" class="font-medium">22:04</div>
+      <div id="clock-date" class="opacity-60 text-[10px]">09/07</div>
+    </div>
+  </div>
+
+  <!-- ===== スタートメニュー ===== -->
+  <div id="start-menu" class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 z-50
+    w-[520px] h-[620px] bg-slate-900/85 backdrop-blur-2xl border border-white/10
+    rounded-2xl p-6 shadow-2xl fade-in">
+
+    <input type="text" placeholder="アプリ、設定、文書を検索..."
+      class="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-2.5 text-sm mb-5 focus:outline-none focus:ring-2 focus:ring-blue-500/50">
+
+    <h3 class="text-xs font-semibold opacity-50 mb-3">固定済みアプリ</h3>
+    <div id="startmenu-apps" class="grid grid-cols-6 gap-2 mb-6">
+      <!-- JSで動的生成 -->
+    </div>
+  </div>
+
+<script>
+// ===== 6大システム定義 =====
+const systems = [
+  { id: 'sales_crm', name: '営業支援CRM', fileName: 'sales_crm.html', icon: '📈', color: 'bg-indigo-600', roles: ['all', 'employee'] },
+  { id: 'public_sector', name: '行政業務管理', fileName: 'public_sector_portal.html', icon: '🏛️', color: 'bg-indigo-900', roles: ['all', 'public'] },
+  { id: 'factory', name: '現場生産管理', fileName: 'factory_portal.html', icon: '🏭', color: 'bg-amber-700', roles: ['all', 'factory'] },
+  { id: 'corporate', name: 'コーポレート管理', fileName: 'corporate_management.html', icon: '🖥️', color: 'bg-teal-700', roles: ['all', 'employee'] },
+  { id: 'company', name: '社内ポータル', fileName: 'company_portal.html', icon: '🏢', color: 'bg-slate-700', roles: ['all', 'employee', 'factory', 'public'] },
+  { id: 'client', name: '社外連携ポータル', fileName: 'client_portal.html', icon: '🌐', color: 'bg-blue-600', roles: ['all', 'client', 'employee'] }
+];
+
+let currentRole = 'all';
+let openWindows = {};
+let zIndexBase = 10;
+let startMenuOpen = false;
+
+// ===== 時計更新（1秒ごとに更新） =====
+function updateClock() {
+  const d = new Date();
+  document.getElementById('clock-time').textContent = 
+    `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+  document.getElementById('clock-date').textContent = 
+    `${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ===== デスクトップ領域クリックでスタートメニューを閉じる =====
+document.getElementById('desktop').addEventListener('click', (e) => {
+  if (e.target.id === 'desktop' || e.target.id === 'window-area') {
+    toggleStartMenu(false);
+  }
+});
+
+// ===== ロールでフィルタ =====
+function getFilteredSystems() {
+  return systems.filter(s => s.roles.includes(currentRole));
+}
+
+// ===== ✅ デスクトップアイコン描画（イベントを確実に発火） =====
+function renderDesktopIcons() {
+  const container = document.getElementById('desktop-icons');
+  container.innerHTML = '';
+  getFilteredSystems().forEach(sys => {
+    const icon = document.createElement('div');
+    icon.className = 'desktop-icon flex flex-col items-center justify-center w-24 h-20';
+    icon.dataset.sysId = sys.id; // ✅ データ属性を付与
+    icon.innerHTML = `
+      <div class="w-12 h-12 ${sys.color} rounded-xl flex items-center justify-center text-xl mb-1 shadow-lg">${sys.icon}</div>
+      <span class="text-[10px] text-center leading-tight px-1">${sys.name}</span>
+    `;
+    container.appendChild(icon);
+  });
+}
+
+// ===== ✅ イベントを一括で監視（どこをクリックしても反応） =====
+document.getElementById('desktop-icons').addEventListener('dblclick', (e) => {
+  const iconEl = e.target.closest('.desktop-icon');
+  if (!iconEl) return;
+  const sysId = iconEl.dataset.sysId;
+  const sys = systems.find(s => s.id === sysId);
+  if (sys) openWindow(sys);
+});
+
+// ===== スタートメニュー描画 =====
+function renderStartMenu() {
+  const container = document.getElementById('startmenu-apps');
+  container.innerHTML = '';
+  getFilteredSystems().forEach(sys => {
+    const item = document.createElement('button');
+    item.className = 'flex flex-col items-center p-2 rounded-xl hover:bg-white/10 transition';
+    item.innerHTML = `<div class="w-10 h-10 ${sys.color} rounded-lg flex items-center justify-center text-lg mb-1">${sys.icon}</div>
+      <span class="text-[10px]">${sys.name}</span>`;
+    item.onclick = () => { openWindow(sys); toggleStartMenu(false); };
+    container.appendChild(item);
+  });
+}
+
+// ===== タスクバー描画 =====
+function renderTaskbar() {
+  const container = document.getElementById('taskbar-apps');
+  container.innerHTML = '';
+  for (const id in openWindows) {
+    const sys = systems.find(s => s.id === id);
+    if (!sys) continue;
+    const btn = document.createElement('button');
+    btn.className = `w-10 h-10 rounded-xl hover:bg-white/15 flex items-center justify-center text-lg
+      ${openWindows[id].classList.contains('active') ? 'taskbar-icon-active bg-white/10' : ''}`;
+    btn.textContent = sys.icon;
+    btn.onclick = () => focusOrMinimizeWindow(id);
+    container.appendChild(btn);
+  }
+}
+
+// ===== スタートメニュー開閉 =====
+function toggleStartMenu(force) {
+  startMenuOpen = typeof force === 'boolean' ? force : !startMenuOpen;
+  document.getElementById('start-menu').classList.toggle('hidden', !startMenuOpen);
+  if (startMenuOpen) renderStartMenu();
+}
+
+// ===== ウィンドウサイズを画面に応じて自動調整 =====
+function openWindow(sys) {
+  if (openWindows[sys.id]) {
+    focusWindow(sys.id);
+    return;
+  }
+
+  zIndexBase += 1;
+  const area = document.getElementById('window-area');
+
+  // 画面サイズに応じてウィンドウサイズを自動計算
+  const windowWidth = Math.min(window.innerWidth * 0.85, 900);
+  const windowHeight = Math.min(window.innerHeight * 0.75, 600);
+  const posLeft = Math.max(50, (window.innerWidth - windowWidth) / 2 - 100);
+  const posTop = Math.max(40, (window.innerHeight - windowHeight) / 2);
+
+  const win = document.createElement('div');
+  win.id = `win-${sys.id}`;
+  win.sysId = sys.id;
+  win.className = `window absolute rounded-xl border border-white/15 shadow-2xl flex flex-col overflow-hidden active fade-in`;
+  win.style.cssText = `
+    width: ${windowWidth}px; height: ${windowHeight}px;
+    left: ${posLeft}px; top: ${posTop}px;
+    background: #0f172a; z-index: ${zIndexBase};
+  `;
+
+  win.innerHTML = `
+    <div class="window-header flex items-center justify-between px-4 py-2 bg-slate-800/90 cursor-move">
+      <div class="flex items-center gap-2">
+        <span class="text-lg">${sys.icon}</span>
+        <span class="text-sm font-medium">${sys.name}</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <button class="w-3 h-3 rounded-full bg-yellow-400/90 hover:bg-yellow-300" title="最小化"></button>
+        <button class="w-3 h-3 rounded-full bg-green-400/90 hover:bg-green-300" title="最大化"></button>
+        <button class="w-3 h-3 rounded-full bg-red-500/90 hover:bg-red-400" title="閉じる"></button>
+      </div>
+    </div>
+    <iframe src="${sys.fileName}" class="flex-1 w-full border-0 bg-white"></iframe>
+  `;
+
+  win.onmousedown = () => focusWindow(sys.id);
+
+  const [minBtn, maxBtn, closeBtn] = win.querySelectorAll('.window-header button');
+  minBtn.onclick = e => { e.stopPropagation(); win.style.display = 'none'; renderTaskbar(); };
+  maxBtn.onclick = e => {
+    e.stopPropagation();
+    if (win.dataset.max === '1') {
+      win.style.cssText = win.dataset.origStyle;
+      delete win.dataset.max;
+    } else {
+      win.dataset.origStyle = win.style.cssText;
+      win.style.cssText = `left:0; top:0; width:100%; height:calc(100vh - 60px); z-index: ${++zIndexBase}`;
+      win.dataset.max = '1';
+    }
+  };
+  closeBtn.onclick = e => { e.stopPropagation(); win.remove(); delete openWindows[sys.id]; renderTaskbar(); };
+
+  makeDraggable(win);
+  area.appendChild(win);
+  openWindows[sys.id] = win;
+  renderTaskbar();
+  toggleStartMenu(false);
+}
+
+// ===== ウィンドウ最前面 =====
+function focusWindow(id) {
+  Object.values(openWindows).forEach(w => w.classList.remove('active'));
+  const win = openWindows[id];
+  if (win) {
+    win.classList.add('active');
+    win.style.zIndex = ++zIndexBase;
+    if (win.style.display === 'none') win.style.display = 'flex';
+  }
+  renderTaskbar();
+}
+
+// ===== タスクバー操作 =====
+function focusOrMinimizeWindow(id) {
+  const win = openWindows[id];
+  if (!win) return;
+  if (win.style.display === 'none') {
+    win.style.display = 'flex';
+    focusWindow(id);
+  } else if (win.classList.contains('active')) {
+    win.style.display = 'none';
+    renderTaskbar();
+  } else {
+    focusWindow(id);
+  }
+}
+
+// ===== ドラッグ移動 =====
+function makeDraggable(win) {
+  const header = win.querySelector('.window-header');
+  let pos1=0, pos2=0, pos3=0, pos4=0;
+  header.onmousedown = e => {
+    if (e.target.tagName === 'BUTTON') return;
+    e.preventDefault();
+    pos3 = e.clientX; pos4 = e.clientY;
+    document.onmousemove = dragMouse;
+    document.onmouseup = () => { document.onmousemove = null; document.onmouseup = null; };
+  };
+  function dragMouse(e) {
+    e.preventDefault();
+    pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY;
+    pos3 = e.clientX; pos4 = e.clientY;
+    const t = win.offsetTop - pos2;
+    const l = win.offsetLeft - pos1;
+    if (t > 0) win.style.top = t + 'px';
+    if (l > 0) win.style.left = l + 'px';
+  }
+}
+
+// ===== ロール切り替え =====
+function changeRole(role) {
+  currentRole = role;
+  renderDesktopIcons();
+  if (startMenuOpen) renderStartMenu();
+}
+
+// ===== 初期描画 =====
+renderDesktopIcons();
+</script>
+</body>
+</html>

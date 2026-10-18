@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>公共機関・行政業務管理ポータル</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-indigo-950 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl">🏛️</span>
+        <h1 class="text-xl font-bold tracking-wide">行政・公共業務統合管理ポータル</h1>
+      </div>
+      <div class="text-sm text-indigo-200">
+        所属: 企画財政部 財政課（職員ID: 10842）
+      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 flex max-w-7xl w-full mx-auto p-4 gap-6">
+
+    <!-- サイドバーナビゲーション -->
+    <aside class="w-64 bg-white rounded-lg shadow p-4 flex flex-col justify-between h-[calc(100vh-6rem)] sticky top-4">
+      <div class="overflow-y-auto pr-1">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">公共・行政管理メニュー</h2>
+        <nav id="nav-list" class="space-y-1">
+          <!-- JSで動的にボタンを生成 -->
+        </nav>
+      </div>
+      <div class="pt-4 border-t text-xs text-slate-400 text-center">
+        &copy; 2026 公共業務管理システム
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ表示エリア -->
+    <main class="flex-1 bg-white rounded-lg shadow p-6 min-h-[calc(100vh-6rem)]">
+      <div id="content-area" class="fade-in">
+        <!-- 初期表示コンテンツ -->
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    // ===== 1. 全6機能の定義 =====
+    const menuItems = [
+      { id: 'policy-project', name: '政策・プロジェクト管理', icon: '🏛️', category: '企画・施策', isCustom: true },
+      { id: 'official-car', name: '公用車管理', icon: '🚘', category: '庁舎・資産', fields: [
+        { label: '利用公用車', type: 'select', options: ['公用車1号 (EV / 本庁舎)', '公用車2号 (ハイブリッド / 東出先事務所)', '広報車 (軽バン / 本庁舎)'] },
+        { label: '使用予定日時', type: 'date' },
+        { label: '使用部署・申請者', type: 'text', value: '企画財政部 財政課' },
+        { label: '公務目的地・巡回先', type: 'text', placeholder: '東部出先出張所および現地視察現場' },
+        { label: '返却時走行距離 (km)', type: 'number', placeholder: '12450' }
+      ]},
+      { id: 'bidding-budget', name: '入札案件・予算管理', icon: '⚖️', category: '財政・契約', fields: [
+        { label: '予算事業名 / 案件名', type: 'text', placeholder: '〇〇地区 公共施設照明LED化改修工事' },
+        { label: '事業予算額 (千円)', type: 'number', placeholder: '15000' },
+        { label: '入札方式', type: 'select', options: ['一般競争入札', '指名競争入札', '公募型プロポーザル', '随意契約'] },
+        { label: '入札告示予定日', type: 'date' },
+        { label: '仕様書・予定価格等メモ', type: 'textarea', placeholder: '積算根拠資料および入札参加資格要件の特記' }
+      ]},
+      { id: 'agency-sharing', name: '原課・出先機関との情報共有', icon: '📡', category: '組織連携', isCustom: true },
+      { id: 'resident-subsidy', name: '住民申請・補助金管理', icon: '📄', category: '住民サービス', fields: [
+        { label: '補助金・給付金事業名', type: 'select', options: ['省エネ家電買い替え促進補助金', '子育て世帯支援特別給付金', '住宅耐震化改修補助事業'] },
+        { label: '受付整理番号', type: 'text', placeholder: 'SUB-2026-0892' },
+        { label: '申請者氏名/法人名', type: 'text', placeholder: '行政 太郎' },
+        { label: '審査ステータス', type: 'select', options: ['受付完了 (書類確認中)', '要差戻し・補正', '審査可決 (交付決定)', '不交付決定', '振込完了'] },
+        { label: '審査メモ・確認事項', type: 'textarea', placeholder: '添付書類確認済み。振込口座口座名義一致。' }
+      ]},
+      { id: 'public-housing', name: '公共設備・住戸管理', icon: '🏢', category: '庁舎・資産', fields: [
+        { label: '管理対象施設・団地名', type: 'text', placeholder: '市営住宅 〇〇団地 3号棟 402号室' },
+        { label: '管理区分', type: 'select', options: ['公営住宅住戸', '公共ホール・公民館', 'スポーツ施設', '行政施設・庁舎'] },
+        { label: '入居・利用ステータス', type: 'select', options: ['入居中・使用中', '空室・空き枠', '修繕・改修対応中', '使用停止'] },
+        { label: '保守点検・修繕履歴メモ', type: 'textarea', placeholder: '給湯器修繕完了。次回定期設備点検予定: 2026/11' }
+      ]}
+    ];
+
+    // ===== 2. 初期化とナビゲーション生成 =====
+    let currentTab = 'policy-project';
+
+    function initNavigation() {
+      const navList = document.getElementById('nav-list');
+      navList.innerHTML = '';
+
+      menuItems.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left px-3 py-2 rounded-md font-medium text-sm transition-all flex items-center space-x-2 ${
+          item.id === currentTab 
+            ? 'bg-indigo-900 text-white shadow' 
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+        }`;
+        btn.onclick = () => switchTab(item.id);
+        btn.innerHTML = `<span>${item.icon}</span> <span>${item.name}</span>`;
+        navList.appendChild(btn);
+      });
+    }
+
+    // ===== 3. 画面切り替え =====
+    function switchTab(tabId) {
+      currentTab = tabId;
+      initNavigation();
+      renderContent();
+    }
+
+    // ===== 4. コンテンツ描画 =====
+    function renderContent() {
+      const contentArea = document.getElementById('content-area');
+      const currentItem = menuItems.find(i => i.id === currentTab);
+
+      contentArea.className = 'fade-in';
+
+      // A. 公共機関特有のカスタム表示
+      if (currentItem.isCustom) {
+        if (currentItem.id === 'policy-project') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>🏛️</span> 政策・重点施策プロジェクト管理</h2>
+            <div class="space-y-4">
+              <div class="p-5 border rounded-lg bg-slate-50">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="font-bold text-lg text-slate-800">総合計画2026: デジタル市役所推進基本構想</h3>
+                  <span class="text-xs font-bold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full">進行中 (75%)</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-3 mb-4">
+                  <div class="bg-indigo-800 h-3 rounded-full" style="width: 75%"></div>
+                </div>
+                <div class="text-sm text-slate-600 space-y-1 border-t pt-3">
+                  <p><strong>所管課:</strong> デジタル推進課 / 企画調整課</p>
+                  <p><strong>進捗状況:</strong> 主要手続きのオンライン化実証実験が完了。出先機関への端末配備を推進中。</p>
+                </div>
+              </div>
+
+              <div class="p-5 border rounded-lg bg-slate-50">
+                <div class="flex justify-between items-center mb-3">
+                  <h3 class="font-bold text-lg text-slate-800">地域防災拠点・避難所Wi-Fi整備事業</h3>
+                  <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">完了 (100%)</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-3 mb-4">
+                  <div class="bg-emerald-600 h-3 rounded-full" style="width: 100%"></div>
+                </div>
+                <div class="text-sm text-slate-600 space-y-1 border-t pt-3">
+                  <p><strong>所管課:</strong> 防災危機管理課</p>
+                  <p><strong>進捗状況:</strong> 指定避難所32箇所への整備および試運転完了。</p>
+                </div>
+              </div>
+            </div>
+          `;
+        } else if (currentItem.id === 'agency-sharing') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>📡</span> 原課・出先機関 連絡ネットワーク</h2>
+            <div class="space-y-4">
+              <div class="p-4 border-l-4 border-indigo-800 bg-indigo-50 rounded-r">
+                <div class="flex justify-between text-xs text-indigo-900 font-bold mb-1">
+                  <span>【本庁財政課 → 各出先出張所・公民館】通達</span>
+                  <span>2026/09/07</span>
+                </div>
+                <h3 class="font-bold text-slate-800">来年度予算要求に係る事前ヒアリングの日程について</h3>
+                <p class="text-sm text-slate-600 mt-2">各出先機関における施設修繕要望書および備品購入調書の提出期限は9月25日（金）厳守でお願いいたします。</p>
+              </div>
+
+              <div class="p-4 border-l-4 border-slate-400 bg-slate-50 rounded-r">
+                <div class="flex justify-between text-xs text-slate-600 font-bold mb-1">
+                  <span>【北部出張所 → 本庁市民課】連絡</span>
+                  <span>2026/09/06</span>
+                </div>
+                <h3 class="font-bold text-slate-800">証明書発行端末の定期点検実施のお知らせ</h3>
+                <p class="text-sm text-slate-600 mt-2">9月12日（土）午前中、北部出張所内の自動交付機メンテナンスを実施します。</p>
+              </div>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      // B. 汎用入力・送信フォーム表示
+      let fieldsHtml = currentItem.fields.map(field => {
+        let inputControl = '';
+        if (field.type === 'textarea') {
+          inputControl = `<textarea rows="3" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>`;
+        } else if (field.type === 'select') {
+          const optionsHtml = field.options.map(opt => `<option>${opt}</option>`).join('');
+          inputControl = `<select class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">${optionsHtml}</select>`;
+        } else {
+          inputControl = `<input type="${field.type}" value="${field.value || ''}" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">`;
+        }
+
+        return `
+          <div class="space-y-1">
+            <label class="block text-sm font-bold text-slate-700">${field.label}</label>
+            ${inputControl}
+          </div>
+        `;
+      }).join('');
+
+      contentArea.innerHTML = `
+        <div class="flex justify-between items-center mb-6 pb-2 border-b">
+          <h2 class="text-2xl font-bold flex items-center gap-2">
+            <span>${currentItem.icon}</span>
+            <span>${currentItem.name}</span>
+          </h2>
+          <span class="text-xs px-2.5 py-1 bg-indigo-50 text-indigo-900 rounded-full font-bold">${currentItem.category}</span>
+        </div>
+
+        <form onsubmit="handleSubmit(event, '${currentItem.name}')" class="space-y-5">
+          ${fieldsHtml}
+          <div class="pt-4 flex justify-end gap-3">
+            <button type="button" onclick="switchTab('policy-project')" class="px-5 py-2 border rounded-lg text-sm font-bold hover:bg-slate-50">キャンセル</button>
+            <button type="submit" class="px-6 py-2 bg-indigo-900 text-white rounded-lg text-sm font-bold hover:bg-indigo-950 shadow">登録・更新する</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // ===== 5. フォーム送信処理 =====
+    function handleSubmit(e, name) {
+      e.preventDefault();
+      alert(`「${name}」のデータが正常に更新・登録されました。`);
+      e.target.reset();
+    }
+
+    // 初回実行
+    initNavigation();
+    renderContent();
+  </script>
+</body>
+</html>
