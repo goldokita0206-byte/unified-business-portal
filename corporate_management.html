@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>社内業務・コーポレート管理ポータル</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in {
+      animation: fadeIn 0.2s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <!-- ヘッダー -->
+  <header class="bg-teal-900 text-white shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <span class="text-2xl">🖥️</span>
+        <h1 class="text-xl font-bold tracking-wide">Corporate Service Portal</h1>
+      </div>
+      <div class="text-sm text-teal-200">
+        ログインユーザー: 中村 蓮 (情報システム部 / 人事総務部)
+      </div>
+    </div>
+  </header>
+
+  <div class="flex-1 flex max-w-7xl w-full mx-auto p-4 gap-6">
+
+    <!-- サイドバーナビゲーション -->
+    <aside class="w-64 bg-white rounded-lg shadow p-4 flex flex-col justify-between h-[calc(100vh-6rem)] sticky top-4">
+      <div class="overflow-y-auto pr-1">
+        <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">コーポレート管理メニュー</h2>
+        <nav id="nav-list" class="space-y-1">
+          <!-- JSで動的にボタンを生成 -->
+        </nav>
+      </div>
+      <div class="pt-4 border-t text-xs text-slate-400 text-center">
+        &copy; 2026 社内統合管理システム
+      </div>
+    </aside>
+
+    <!-- メインコンテンツ表示エリア -->
+    <main class="flex-1 bg-white rounded-lg shadow p-6 min-h-[calc(100vh-6rem)]">
+      <div id="content-area" class="fade-in">
+        <!-- 初期表示コンテンツ -->
+      </div>
+    </main>
+
+  </div>
+
+  <script>
+    // ===== 1. 全14機能の定義 =====
+    const menuItems = [
+      { id: 'helpdesk', name: 'ヘルプデスク', icon: '🎧', category: 'IT・情報システム', fields: [
+        { label: '問い合わせカテゴリ', type: 'select', options: ['PC・周辺機器トラブル', '社内ネットワーク・VPN', 'アカウント・パスワード再発行', '利用ソフトウェア不具合'] },
+        { label: '件名・対象システム', type: 'text', placeholder: '例：VPN接続が途切れる件' },
+        { label: '発生頻度・緊急度', type: 'select', options: ['低 (業務影響なし)', '中 (回避策あり)', '高 (業務停止中)'] },
+        { label: '問い合わせ詳細', type: 'textarea', placeholder: 'エラーメッセージや発生手順を詳しく記載してください' },
+        { label: '画面キャプチャ等添付', type: 'file' }
+      ]},
+      { id: 'it-assets', name: 'IT資産管理', icon: '💻', category: 'IT・情報システム', fields: [
+        { label: '資産管理番号', type: 'text', placeholder: 'IT-2026-042' },
+        { label: '機器種別', type: 'select', options: ['ノートPC', 'デスクトップPC', 'モニター', 'モバイルルーター', 'その他'] },
+        { label: 'メーカー・型番', type: 'text', placeholder: 'ThinkPad X1 Carbon' },
+        { label: '割り当て使用者', type: 'text', placeholder: '中村 蓮 (情シス)' },
+        { label: '保管・使用場所', type: 'select', options: ['本社オフィス', 'リモートワーク（自宅）', '支社倉庫'] }
+      ]},
+      { id: 'work-request', name: '作業依頼管理', icon: '🛠️', category: 'IT・情報システム', fields: [
+        { label: '依頼作業名', type: 'text', placeholder: '新入社員用PCキッティングおよびアカウント発行' },
+        { label: '希望完了納期', type: 'date' },
+        { label: '対象部署・対象者', type: 'text', placeholder: '営業第二部 3名分' },
+        { label: '依頼作業仕様・詳細', type: 'textarea', placeholder: '標準ソフトウェア一式および営業ツールAの設定' }
+      ]},
+      { id: 'project-management', name: 'プロジェクト管理', icon: '📅', category: 'IT・情報システム', isCustom: true },
+      { id: 'company-car', name: '社用車管理', icon: '🚗', category: '総務・施設', fields: [
+        { label: '使用車両', type: 'select', options: ['社用車1号 (プリウス / 品川500 さ 12-34)', '社用車2号 (プロボックス / 品川500 た 56-78)', 'バン (ハイエース / 品川400 な 90-12)'] },
+        { label: '使用日時', type: 'date' },
+        { label: '行先・利用目的', type: 'text', placeholder: '横浜支社・〇〇様納品訪問' },
+        { label: '運転者氏名', type: 'text', value: '中村 蓮' },
+        { label: '返却時走行距離 (km)', type: 'number', placeholder: '45210' }
+      ]},
+      { id: 'fixtures', name: '備品管理', icon: '📦', category: '総務・施設', fields: [
+        { label: '備品名', type: 'text', placeholder: 'プロジェクター (持ち出し用)' },
+        { label: '貸出日・返却予定日', type: 'date' },
+        { label: '利用目的・保管場所', type: 'text', placeholder: '役員会議室でのプレゼン利用' },
+        { label: '持ち出し状態', type: 'select', options: ['社内利用のみ', '社外持ち出し'] }
+      ]},
+      { id: 'performance-eval', name: '人事評価', icon: '📝', category: '人事・労務', fields: [
+        { label: '評価対象期', type: 'select', options: ['2026年度 上期', '2026年度 下期'] },
+        { label: '目標設定・達成度', type: 'textarea', placeholder: '今期の定性・定量目標に対する進捗・成果' },
+        { label: '自己評価ランク', type: 'select', options: ['S (大幅達成)', 'A (目標達成)', 'B (概ね達成)', 'C (要改善)'] },
+        { label: '所感・今後の課題', type: 'textarea', placeholder: '来期に向けたスキルアップ計画など' }
+      ]},
+      { id: 'recruitment', name: '採用管理', icon: '🤝', category: '人事・労務', fields: [
+        { label: '応募者氏名', type: 'text', placeholder: '鈴木 一郎 様' },
+        { label: '応募職種', type: 'select', options: ['Webエンジニア', '営業職', '人事労務担当', 'カスタマーサポート'] },
+        { label: '選考フェーズ', type: 'select', options: ['書類選考', '一次面接', '最終面接', '内定発行', '辞退・不採用'] },
+        { label: '面接評価メモ', type: 'textarea', placeholder: 'コミュニケーション能力が高く、実務経験も豊富' }
+      ]},
+      { id: 'procurement-inspection', name: '購買・検収管理', icon: '🔍', category: '購買・経理', fields: [
+        { label: '発注・注文番号', type: 'text', placeholder: 'PO-2026-0901' },
+        { label: '品名・仕様', type: 'text', placeholder: 'オフィス用デスクチェア 5脚' },
+        { label: '納品検収日', type: 'date' },
+        { label: '検収結果', type: 'select', options: ['検収完了 (問題なし)', '一部不良あり', '数量不一致', '受取拒否'] },
+        { label: '検収担当者メモ', type: 'textarea', placeholder: '梱包・状態確認済み' }
+      ]},
+      { id: 'order-management', name: '受発注管理', icon: '🚚', category: '購買・経理', fields: [
+        { label: '取引区分', type: 'select', options: ['発注 (仕入)', '受注 (販売)'] },
+        { label: '取引先企業名', type: 'text', placeholder: '株式会社サプライヤ' },
+        { label: '金額 (税抜/円)', type: 'number', placeholder: '350000' },
+        { label: '納品・支払期日', type: 'date' },
+        { label: '注文書・請書データ', type: 'file' }
+      ]},
+      { id: 'smartphone-request', name: 'スマートフォン利用申請', icon: '📱', category: 'IT・情報システム', fields: [
+        { label: '申請種別', type: 'select', options: ['新規貸与', '機種変更', '紛失・破損交換', '解約・返却'] },
+        { label: '利用希望機種', type: 'select', options: ['iPhone (標準モデル)', 'Android (標準モデル)', 'SIMカードのみ'] },
+        { label: '利用目的', type: 'textarea', placeholder: '外出先での社内メール確認および顧客対応のため' },
+        { label: 'テザリング利用申請', type: 'select', options: ['希望する', '希望しない'] }
+      ]},
+      { id: 'talent-management', name: 'タレントマネジメント', icon: '🌟', category: '人事・労務', fields: [
+        { label: '対象社員名', type: 'text', placeholder: '中村 蓮' },
+        { label: '保有スキル・資格', type: 'textarea', placeholder: '基本情報技術者, AWS Certified Solutions Architect, TOEIC 800点' },
+        { label: 'キャリア志向・希望部署', type: 'textarea', placeholder: '将来的にIT戦略・プロジェクトマネジメント業務に従事したい' },
+        { label: '適性・コンピテンシー特徴', type: 'text', placeholder: '論理的思考力、プロジェクト推進力' }
+      ]},
+      { id: 'uniform-loan', name: '制服貸出管理', icon: '👔', category: '総務・施設', fields: [
+        { label: '貸出対象者', type: 'text', placeholder: '中村 蓮' },
+        { label: '制服種類・サイズ', type: 'select', options: ['作業着(上) - M', '作業着(上) - L', '作業着(下) - M', '防寒ベスト - L', '安全靴 - 26.5cm'] },
+        { label: '貸与区分', type: 'select', options: ['新規支給', 'サイズ交換', '破損・劣化交換', '退職返却'] },
+        { label: '貸与日', type: 'date' }
+      ]},
+      { id: 'travel-expense', name: '交通費精算', icon: '🚃', category: '購買・経理', fields: [
+        { label: '移動日', type: 'date' },
+        { label: '利用交通機関', type: 'select', options: ['電車・地下鉄', 'バス', 'タクシー', '新幹線・特急'] },
+        { label: '乗車区間 (出発〜到着)', type: 'text', placeholder: '品川駅 ～ 新横浜駅' },
+        { label: '往復/片道', type: 'select', options: ['往復', '片道'] },
+        { label: '金額 (円)', type: 'number', placeholder: '1380' },
+        { label: '訪問先・目的', type: 'text', placeholder: '〇〇社様 打ち合わせのため' }
+      ]}
+    ];
+
+    // ===== 2. 初期化とナビゲーション生成 =====
+    let currentTab = 'helpdesk';
+
+    function initNavigation() {
+      const navList = document.getElementById('nav-list');
+      navList.innerHTML = '';
+
+      menuItems.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = `w-full text-left px-3 py-2 rounded-md font-medium text-sm transition-all flex items-center space-x-2 ${
+          item.id === currentTab 
+            ? 'bg-teal-700 text-white shadow' 
+            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+        }`;
+        btn.onclick = () => switchTab(item.id);
+        btn.innerHTML = `<span>${item.icon}</span> <span>${item.name}</span>`;
+        navList.appendChild(btn);
+      });
+    }
+
+    // ===== 3. 画面切り替え =====
+    function switchTab(tabId) {
+      currentTab = tabId;
+      initNavigation();
+      renderContent();
+    }
+
+    // ===== 4. コンテンツ描画 =====
+    function renderContent() {
+      const contentArea = document.getElementById('content-area');
+      const currentItem = menuItems.find(i => i.id === currentTab);
+
+      contentArea.className = 'fade-in';
+
+      // A. 特殊ダッシュボード表示（プロジェクト管理）
+      if (currentItem.isCustom) {
+        if (currentItem.id === 'project-management') {
+          contentArea.innerHTML = `
+            <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><span>📅</span> プロジェクト管理 (タスクボード)</h2>
+            <div class="grid grid-cols-3 gap-4">
+              <div class="p-4 bg-slate-50 border rounded-lg">
+                <h3 class="font-bold text-slate-700 mb-3 border-b pb-2">未着手 (To Do)</h3>
+                <div class="bg-white p-3 rounded shadow-sm border mb-2">
+                  <p class="font-bold text-sm">全社PCリプレイス計画策定</p>
+                  <p class="text-xs text-slate-500 mt-1">期日: 2026/10/15</p>
+                </div>
+              </div>
+
+              <div class="p-4 bg-teal-50 border border-teal-100 rounded-lg">
+                <h3 class="font-bold text-teal-800 mb-3 border-b border-teal-200 pb-2">進行中 (In Progress)</h3>
+                <div class="bg-white p-3 rounded shadow-sm border mb-2">
+                  <p class="font-bold text-sm">新勤怠管理システム移行テスト</p>
+                  <p class="text-xs text-slate-500 mt-1">担当: 情シスチーム</p>
+                </div>
+              </div>
+
+              <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-lg">
+                <h3 class="font-bold text-emerald-800 mb-3 border-b border-emerald-200 pb-2">完了 (Done)</h3>
+                <div class="bg-white p-3 rounded shadow-sm border mb-2">
+                  <p class="font-bold text-sm">セキュリティ研修2026の実施</p>
+                  <p class="text-xs text-slate-500 mt-1">全社受講完了</p>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        return;
+      }
+
+      // B. 汎用入力フォーム表示
+      let fieldsHtml = currentItem.fields.map(field => {
+        let inputControl = '';
+        if (field.type === 'textarea') {
+          inputControl = `<textarea rows="3" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"></textarea>`;
+        } else if (field.type === 'select') {
+          const optionsHtml = field.options.map(opt => `<option>${opt}</option>`).join('');
+          inputControl = `<select class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">${optionsHtml}</select>`;
+        } else {
+          inputControl = `<input type="${field.type}" value="${field.value || ''}" placeholder="${field.placeholder || ''}" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none">`;
+        }
+
+        return `
+          <div class="space-y-1">
+            <label class="block text-sm font-bold text-slate-700">${field.label}</label>
+            ${inputControl}
+          </div>
+        `;
+      }).join('');
+
+      contentArea.innerHTML = `
+        <div class="flex justify-between items-center mb-6 pb-2 border-b">
+          <h2 class="text-2xl font-bold flex items-center gap-2">
+            <span>${currentItem.icon}</span>
+            <span>${currentItem.name}</span>
+          </h2>
+          <span class="text-xs px-2.5 py-1 bg-teal-50 text-teal-800 rounded-full font-bold">${currentItem.category}</span>
+        </div>
+
+        <form onsubmit="handleSubmit(event, '${currentItem.name}')" class="space-y-5">
+          ${fieldsHtml}
+          <div class="pt-4 flex justify-end gap-3">
+            <button type="button" onclick="switchTab('helpdesk')" class="px-5 py-2 border rounded-lg text-sm font-bold hover:bg-slate-50">リセット</button>
+            <button type="submit" class="px-6 py-2 bg-teal-700 text-white rounded-lg text-sm font-bold hover:bg-teal-800 shadow">申請・登録する</button>
+          </div>
+        </form>
+      `;
+    }
+
+    // ===== 5. フォーム送信処理 =====
+    function handleSubmit(e, name) {
+      e.preventDefault();
+      alert(`「${name}」の申請・データ登録が正常に完了しました。`);
+      e.target.reset();
+    }
+
+    // 初回実行
+    initNavigation();
+    renderContent();
+  </script>
+</body>
+</html>

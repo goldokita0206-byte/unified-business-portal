@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ollama 自作Webページ連携サンプル</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col items-center justify-center p-4">
+
+  <div class="max-w-xl w-full bg-white rounded-xl shadow-md p-6 space-y-4">
+    <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+      <span>🤖</span> ローカルAI (Ollama) チャット
+    </h1>
+
+    <!-- チャットログ表示エリア -->
+    <div id="chat-log" class="h-80 border border-slate-200 rounded-lg p-4 overflow-y-auto space-y-3 bg-slate-50 text-sm">
+      <div class="text-slate-400 text-center text-xs">ここにAIとの会話が表示されます（使用モデル: llama3）</div>
+    </div>
+
+    <!-- 入力フォーム -->
+    <div class="flex gap-2">
+      <input type="text" id="user-input" placeholder="メッセージを入力してください..." class="flex-1 border border-slate-300 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 text-sm">
+      <button onclick="sendMessage()" id="send-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-5 py-2 rounded-lg text-sm transition-colors">送信</button>
+    </div>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const inputElem = document.getElementById('user-input');
+      const chatLog = document.getElementById('chat-log');
+      const sendBtn = document.getElementById('send-btn');
+      const prompt = inputElem.value.trim();
+
+      if (!prompt) return;
+
+      // ユーザーの入力を画面に追加
+      chatLog.innerHTML += `<div class="text-right"><span class="inline-block bg-blue-600 text-white px-3 py-2 rounded-lg text-xs max-w-[80%] text-left">${escapeHtml(prompt)}</span></div>`;
+      inputElem.value = '';
+      chatLog.scrollTop = chatLog.scrollHeight;
+
+      // ローディング表示用要素の作成
+      const loadingId = 'loading-' + Date.now();
+      chatLog.innerHTML += `<div id="${loadingId}" class="text-left"><span class="inline-block bg-slate-200 text-slate-600 px-3 py-2 rounded-lg text-xs">AIが考えています...</span></div>`;
+      chatLog.scrollTop = chatLog.scrollHeight;
+
+      sendBtn.disabled = true;
+
+      try {
+        // OllamaのAPIエンドポイントへリクエスト送信
+        const response = await fetch('http://localhost:11434/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'llama3', // お使いのモデル名に変更可能 (例: gemma2, rinna など)
+            prompt: prompt,
+            stream: false
+          })
+        });
+
+        const data = await response.json();
+        
+        // ローディングを削除してAIの返答を表示
+        document.getElementById(loadingId).remove();
+        chatLog.innerHTML += `<div class="text-left"><span class="inline-block bg-white border border-slate-200 text-slate-800 px-3 py-2 rounded-lg text-xs max-w-[80%] shadow-sm">${escapeHtml(data.response)}</span></div>`;
+
+      } catch (error) {
+        document.getElementById(loadingId).remove();
+        chatLog.innerHTML += `<div class="text-left"><span class="inline-block bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs">エラー: Ollamaと接続できませんでした。（CORS設定やOllamaの起動を確認してください）</span></div>`;
+        console.error(error);
+      } finally {
+        sendBtn.disabled = false;
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+    }
+
+    // 簡易的なHTMLエスケープ
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    // Enterキーでも送信できるようにする
+    document.getElementById('user-input').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>

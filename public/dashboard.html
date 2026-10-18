@@ -1,0 +1,117 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ポータル - 統合業務ポータルシステム</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in{animation:fadeIn .25s ease-out;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .system-card{transition:all .2s cubic-bezier(.4,0,.2,1)}
+    .system-card:hover{transform:translateY(-4px);box-shadow:0 12px 24px -10px rgba(0,0,0,.15)}
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col">
+<script>
+// 認証チェック
+(async ()=>{
+  const ses=localStorage.getItem('portal_session');
+  if(!ses){location.href='/index.html';return}
+  const v=await fetch('/api/verify',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({session:ses})});
+  const r=await v.json();
+  if(!r.valid){localStorage.clear();location.href='/index.html';return}
+  window.__role=r.role;
+  document.cookie=`role=${r.role};path=/`;
+  initPage();
+})();
+</script>
+<header class="bg-slate-900 text-white shadow-lg sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+    <div class="flex items-center space-x-3">
+      <div class="p-2 bg-blue-600 rounded-lg text-xl">❖</div>
+      <div><h1 class="font-bold">統合業務ポータル</h1><p class="text-xs text-slate-400">Local AI Secure Portal</p></div>
+    </div>
+    <div class="flex items-center gap-3">
+      <select id="role-sel" onchange="changeRole(this.value)" class="bg-slate-800 text-xs border border-slate-600 rounded px-2 py-1">
+        <option value="all">全システム表示</option>
+        <option value="employee">一般社員</option>
+        <option value="factory">現場作業員</option>
+        <option value="public">行政職員</option>
+        <option value="client">取引先</option>
+      </select>
+      <button onclick="doLogout()" class="bg-red-600/80 hover:bg-red-600 px-3 py-1.5 rounded text-xs">ログアウト</button>
+    </div>
+  </div>
+</header>
+<main class="flex-1 max-w-7xl mx-auto p-4 sm:p-6">
+  <h2 class="text-lg font-bold mb-4">🚀 業務システムハブ <span id="cnt" class="text-sm font-normal text-slate-500"></span></h2>
+  <div id="grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 fade-in"></div>
+</main>
+
+<div class="fixed bottom-5 right-5 z-50 flex flex-col items-end">
+  <div id="chat-win" class="hidden w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col mb-3" style="height:480px">
+    <div class="bg-slate-900 text-white p-3 flex justify-between items-center">
+      <span class="font-bold text-sm">🤖 社内AIアシスタント</span>
+      <button onclick="toggleChat()" class="text-slate-400 hover:text-white font-bold">&times;</button>
+    </div>
+    <div id="chat-log" class="flex-1 p-3 overflow-y-auto bg-slate-50 text-xs space-y-3 text-slate-600">
+      <div class="text-center py-2">ローカルAIへようこそ</div>
+    </div>
+    <div class="p-3 border-t flex gap-2">
+      <input id="chat-in" type="text" placeholder="メッセージ入力…" class="flex-1 border rounded px-3 py-2 text-xs">
+      <button onclick="sendChat()" class="bg-blue-600 text-white px-3 py-2 rounded text-xs">送信</button>
+    </div>
+  </div>
+  <button onclick="toggleChat()" class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg text-2xl">🤖</button>
+</div>
+
+<script>
+const systems=[
+  {id:'sales',name:'営業支援&CRM',icon:'📈',color:'indigo',desc:'顧客・商談・見積・予実管理',roles:['all','employee']},
+  {id:'public',name:'公共・行政管理',icon:'🏛️',color:'indigo-900',desc:'入札・補助金・事業計画',roles:['all','public']},
+  {id:'field',name:'現場・生産管理',icon:'🏭',color:'amber',desc:'進捗・点検・不具合報告',roles:['all','factory']},
+  {id:'corp',name:'コーポレート管理',icon:'🖥️',color:'teal',desc:'人事・資産・経理',roles:['all','employee']},
+  {id:'portal',name:'社内ポータル&申請',icon:'🏢',color:'slate',desc:'決裁・勤怠・FAQ',roles:['all','employee','factory','public']},
+  {id:'partner',name:'社外連携ポータル',icon:'🌐',color:'blue',desc:'契約・見積・進捗共有',roles:['all','client','employee']}
+];
+let curRole='all';
+function initPage(){renderSystems()}
+function renderSystems(){
+  const g=document.getElementById('grid'); g.innerHTML='';
+  const f=systems.filter(s=>s.roles.includes(curRole));
+  document.getElementById('cnt').textContent=`(${f.length}システム)`;
+  f.forEach(s=>{
+    g.innerHTML+=`<div class="system-card bg-white rounded-xl border-slate-200 shadow-sm p-5">
+      <h3 class="font-bold text-lg mb-2">${s.icon} ${s.name}</h3>
+      <p class="text-xs text-slate-500 mb-3">${s.desc}</p>
+      <button class="w-full bg-slate-900 text-white py-2 rounded text-xs">画面を開く →</button>
+    </div>`;
+  });
+}
+function changeRole(r){curRole=r;renderSystems()}
+function doLogout(){localStorage.clear();location.href='/index.html'}
+function toggleChat(){document.getElementById('chat-win').classList.toggle('hidden')}
+async function sendChat(){
+  const i=document.getElementById('chat-in'),l=document.getElementById('chat-log'),m=i.value.trim();
+  if(!m)return;
+  l.innerHTML+=`<div class="text-right"><span class="bg-blue-600 text-white px-3 py-2 rounded inline-block max-w-[85%]">${escape(m)}</span></div>`;
+  i.value='';
+  const ld=document.createElement('div');ld.className='text-left';ld.innerHTML='<span class="bg-slate-200 px-3 py-2 rounded">応答生成中…</span>';l.appendChild(ld);l.scrollTop=l.scrollHeight;
+  try{
+    const res=await fetch('http://localhost:11434/api/generate',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'llama3',prompt:m,stream:false})
+    });
+    const d=await res.json();
+    ld.remove();
+    l.innerHTML+=`<div class="text-left"><span class="bg-white border px-3 py-2 rounded">${escape(d.response)}</span></div>`;
+  }catch(e){ld.remove();l.innerHTML+='<div class="text-left text-red-500">接続エラー:ollama serveを確認</div>'}
+  l.scrollTop=l.scrollHeight;
+}
+function escape(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+document.getElementById('chat-in').addEventListener('keypress',e=>e.key==='Enter'&&sendChat());
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+﻿{
+    "Id":  1,
+    "Username":  "admin",
+    "PasswordHash":  "xJE/UJg6iz6x308zveGo2MT8vfAD9KEf0J2Y1Ij1Ugo=",
+    "Salt":  "VufsvHMFtEongSgJLWa1UaGH",
+    "Role":  "all",
+    "IsActive":  true,
+    "CreatedAt":  "2026-10-19 00:09:00"
+}
